@@ -1,11 +1,14 @@
 import sqlite3
 import json
+import urllib.request
+import urllib.error
 from master_catalog import normalize_item_name
 
 
 PHARMACY_DB_FOLDER = "data"
 TOTAL_PHARMACIES = 10
 OUTPUT_FILE = "sync_payload.json"
+BACKEND_SYNC_URL = "http://127.0.0.1:8000/sync/inventory"
 
 
 def get_stock_status(quantity):
@@ -61,6 +64,27 @@ def save_payload_to_json(payload):
     print(f"Saved sync payload to {OUTPUT_FILE}")
 
 
+def send_payload_to_backend(payload):
+    data = json.dumps(payload).encode("utf-8")
+
+    request = urllib.request.Request(
+        BACKEND_SYNC_URL,
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method="POST"
+    )
+
+    try:
+        with urllib.request.urlopen(request) as response:
+            response_body = response.read().decode("utf-8")
+            print("Backend response:")
+            print(response_body)
+
+    except urllib.error.URLError as error:
+        print("Failed to send data to backend")
+        print(error)
+
+
 if __name__ == "__main__":
     sync_payload = build_sync_payload()
 
@@ -69,3 +93,4 @@ if __name__ == "__main__":
     print(f"Total records: {len(sync_payload)}")
 
     save_payload_to_json(sync_payload)
+    send_payload_to_backend(sync_payload)
