@@ -117,6 +117,41 @@ pharmacies = {
     },
 }
 
+SEARCH_CATALOG = {
+    "c section": "caesarean surgical kit",
+    "c section kit": "caesarean surgical kit",
+    "cesarean": "caesarean surgical kit",
+    "cesarean kit": "caesarean surgical kit",
+    "caesarean": "caesarean surgical kit",
+    "caesarean kit": "caesarean surgical kit",
+
+    "appendix": "appendectomy surgical kit",
+    "appendix surgery kit": "appendectomy surgical kit",
+    "appendectomy": "appendectomy surgical kit",
+    "appendectomy kit": "appendectomy surgical kit",
+
+    "general surgery": "general surgery kit",
+    "general surgery pack": "general surgery kit",
+    "surgery pack": "general surgery kit",
+
+    "suture": "suture pack",
+    "suture pack": "suture pack",
+    "sutures": "suture pack",
+
+    "dressing": "dressing kit",
+    "dressing kit": "dressing kit",
+    "wound dressing": "dressing kit",
+    "wound dressing kit": "dressing kit",
+}
+
+
+def normalize_search_query(query):
+    search_text = query.strip().lower()
+
+    if search_text in SEARCH_CATALOG:
+        return SEARCH_CATALOG[search_text]
+
+    return search_text
 
 class InventorySyncItem(BaseModel):
     pharmacy_id: int
@@ -169,14 +204,23 @@ def get_inventory():
 
 @app.get("/search")
 def search_inventory(item_name: str):
-    search_text = item_name.strip().lower()
+    raw_search_text = item_name.strip().lower()
+    normalized_search_text = normalize_search_query(item_name)
+
     results = []
 
     for item in inventory_store:
         standard_name = item["standard_item_name"].lower()
+        local_name = item["local_item_name"].lower()
         status = item["status"]
 
-        if search_text in standard_name and status in ["Available", "Low Stock"]:
+        is_matching_item = (
+            normalized_search_text in standard_name
+            or raw_search_text in local_name
+            or raw_search_text in standard_name
+        )
+
+        if is_matching_item and status in ["Available", "Low Stock"]:
             pharmacy_id = item["pharmacy_id"]
             pharmacy = pharmacies.get(pharmacy_id, {})
 
@@ -192,7 +236,7 @@ def search_inventory(item_name: str):
                 "standard_item_name": item["standard_item_name"],
                 "quantity": item["quantity"],
                 "status": item["status"],
-                "last_updated": item["last_updated"]
+                "last_updated": item["last_updated"],
             }
 
             results.append(result)
@@ -201,6 +245,7 @@ def search_inventory(item_name: str):
 
     return {
         "query": item_name,
+        "normalized_query": normalized_search_text,
         "results_count": len(results),
-        "results": results
+        "results": results,
     }
