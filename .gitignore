@@ -1,5 +1,14 @@
-venv/
-node_modules/
-.env
+# Python
+backend/venv/
 __pycache__/
+*.pyc
+
+# Node / React
+frontend/node_modules/
+frontend/dist/
+
+# System files
 .DS_Store
+
+# Environment files
+.env
