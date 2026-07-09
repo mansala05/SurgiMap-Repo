@@ -1,95 +1,97 @@
 import React, { useState, Component } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { SearchIcon, XIcon, MenuIcon, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-const NAV_LINKS = ['About', 'Services', 'How it works', 'Help'];
+
+const NAV_LINKS = ['About', 'How it works', 'Help'];
 const FOOTER_LINKS = {
   Company: ['About', 'Features', 'How it works', 'Search'],
   Support: ['Help center', 'Contact', 'Privacy and Terms']
 };
 const QUICK_KITS = [
-{
-  id: 1,
-  name: 'Laparoscopic Basic Set',
-  category: 'Minimally Invasive',
-  pharmacies: '12 pharmacies',
-  image:
-  'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=800'
-},
-{
-  id: 2,
-  name: 'Orthopedic Trauma Kit',
-  category: 'Orthopedics',
-  pharmacies: '24 pharmacies',
-  image:
-  'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&q=80&w=800'
-},
-{
-  id: 3,
-  name: 'Cardiovascular Set',
-  category: 'Cardiac',
-  pharmacies: '18 pharmacies',
-  image:
-  'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=800'
-},
-{
-  id: 4,
-  name: 'General Surgery Pack',
-  category: 'General',
-  pharmacies: '15 pharmacies',
-  image:
-  'https://images.unsplash.com/photo-1587854692152-cbe660dbbb88?auto=format&fit=crop&q=80&w=800'
-},
-{
-  id: 5,
-  name: 'Neurosurgery Cranial Kit',
-  category: 'Neurosurgery',
-  pharmacies: '20 pharmacies',
-  image:
-  'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&q=80&w=800'
-},
-{
-  id: 6,
-  name: 'Ophthalmology Micro Set',
-  category: 'Ophthalmology',
-  pharmacies: '10 pharmacies',
-  image:
-  'https://images.unsplash.com/photo-1579154235828-4519f39f93cb?auto=format&fit=crop&q=80&w=800'
-},
-{
-  id: 7,
-  name: 'Arthroscopy Instrument Set',
-  category: 'Orthopedics',
-  pharmacies: '16 pharmacies',
-  image:
-  'https://images.unsplash.com/photo-1583947215259-38e31be8751f?auto=format&fit=crop&q=80&w=800'
-},
-{
-  id: 8,
-  name: 'Cesarean Section Kit',
-  category: 'OB/GYN',
-  pharmacies: '14 pharmacies',
-  image:
-  'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800'
-},
-{
-  id: 9,
-  name: 'Endoscopy Flexible Set',
-  category: 'Gastroenterology',
-  pharmacies: '8 pharmacies',
-  image:
-  'https://images.unsplash.com/photo-1581595221475-19906ca447fd?auto=format&fit=crop&q=80&w=800'
-},
-{
-  id: 10,
-  name: 'Thoracic Surgery Pack',
-  category: 'Thoracic',
-  pharmacies: '22 pharmacies',
-  image:
-  'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=800'
-}];
+  {
+    id: 1,
+    name: 'Laparoscopic Basic Set',
+    category: 'Minimally Invasive',
+    pharmacies: '12 pharmacies',
+    image:
+      'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 2,
+    name: 'Orthopedic Trauma Kit',
+    category: 'Orthopedics',
+    pharmacies: '24 pharmacies',
+    image:
+      'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 3,
+    name: 'Cardiovascular Set',
+    category: 'Cardiac',
+    pharmacies: '18 pharmacies',
+    image:
+      'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 4,
+    name: 'General Surgery Pack',
+    category: 'General',
+    pharmacies: '15 pharmacies',
+    image:
+      'https://images.unsplash.com/photo-1587854692152-cbe660dbbb88?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 5,
+    name: 'Neurosurgery Cranial Kit',
+    category: 'Neurosurgery',
+    pharmacies: '20 pharmacies',
+    image:
+      'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 6,
+    name: 'Ophthalmology Micro Set',
+    category: 'Ophthalmology',
+    pharmacies: '10 pharmacies',
+    image:
+      'https://images.unsplash.com/photo-1579154235828-4519f39f93cb?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 7,
+    name: 'Arthroscopy Instrument Set',
+    category: 'Orthopedics',
+    pharmacies: '16 pharmacies',
+    image:
+      'https://images.unsplash.com/photo-1583947215259-38e31be8751f?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 8,
+    name: 'Cesarean Section Kit',
+    category: 'OB/GYN',
+    pharmacies: '14 pharmacies',
+    image:
+      'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 9,
+    name: 'Endoscopy Flexible Set',
+    category: 'Gastroenterology',
+    pharmacies: '8 pharmacies',
+    image:
+      'https://images.unsplash.com/photo-1581595221475-19906ca447fd?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 10,
+    name: 'Thoracic Surgery Pack',
+    category: 'Thoracic',
+    pharmacies: '22 pharmacies',
+    image:
+      'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=800'
+  }];
 
 export function Search() {
+  const location = useLocation();
   const [query, setQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -114,53 +116,53 @@ export function Search() {
     <div className="min-h-screen bg-iceWhite text-obsidian font-sans selection:bg-arcticNavy/10 overflow-x-hidden flex flex-col">
       <AnimatePresence>
         {isLoading &&
-        <motion.div
-          initial={{
-            opacity: 0
-          }}
-          animate={{
-            opacity: 1
-          }}
-          exit={{
-            opacity: 0
-          }}
-          className="fixed inset-0 z-[300] bg-iceWhite flex flex-col items-center justify-center p-8">
-          
+          <motion.div
+            initial={{
+              opacity: 0
+            }}
+            animate={{
+              opacity: 1
+            }}
+            exit={{
+              opacity: 0
+            }}
+            className="fixed inset-0 z-[300] bg-iceWhite flex flex-col items-center justify-center p-8">
+
             <div className="max-w-md w-full text-center space-y-12">
               {/* Branding */}
               <motion.div
-              initial={{
-                y: 20,
-                opacity: 0
-              }}
-              animate={{
-                y: 0,
-                opacity: 1
-              }}
-              transition={{
-                delay: 0.2
-              }}
-              className="flex flex-col items-center gap-4">
-              
+                initial={{
+                  y: 20,
+                  opacity: 0
+                }}
+                animate={{
+                  y: 0,
+                  opacity: 1
+                }}
+                transition={{
+                  delay: 0.2
+                }}
+                className="flex flex-col items-center gap-4">
+
                 <span className="text-4xl font-black tracking-tighter text-arcticNavy">
                   surgimap
                 </span>
                 <div className="flex gap-2">
                   {[0, 1, 2, 3].map((i) =>
-                <motion.div
-                  key={i}
-                  animate={{
-                    scale: [1, 1.5, 1],
-                    opacity: [0.3, 1, 0.3]
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    delay: i * 0.2
-                  }}
-                  className="w-2 h-2 rounded-full bg-arcticNavy" />
+                    <motion.div
+                      key={i}
+                      animate={{
+                        scale: [1, 1.5, 1],
+                        opacity: [0.3, 1, 0.3]
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        delay: i * 0.2
+                      }}
+                      className="w-2 h-2 rounded-full bg-arcticNavy" />
 
-                )}
+                  )}
                 </div>
               </motion.div>
 
@@ -168,49 +170,49 @@ export function Search() {
               <div className="space-y-6">
                 <div className="relative flex justify-center">
                   <motion.div
-                  animate={{
-                    rotate: 360
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: 'linear'
-                  }}
-                  className="text-arcticNavy">
-                  
+                    animate={{
+                      rotate: 360
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: 'linear'
+                    }}
+                    className="text-arcticNavy">
+
                     <Loader2 className="w-16 h-16 stroke-[1.5]" />
                   </motion.div>
                   <motion.div
-                  initial={{
-                    scale: 0.8,
-                    opacity: 0
-                  }}
-                  animate={{
-                    scale: 1,
-                    opacity: 1
-                  }}
-                  transition={{
-                    duration: 1,
-                    repeat: Infinity,
-                    repeatType: 'reverse'
-                  }}
-                  className="absolute inset-0 flex items-center justify-center">
-                  
+                    initial={{
+                      scale: 0.8,
+                      opacity: 0
+                    }}
+                    animate={{
+                      scale: 1,
+                      opacity: 1
+                    }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      repeatType: 'reverse'
+                    }}
+                    className="absolute inset-0 flex items-center justify-center">
+
                     <div className="w-8 h-8 bg-glacierBlue/20 rounded-full blur-xl" />
                   </motion.div>
                 </div>
 
                 <div className="space-y-2">
                   <motion.h2
-                  animate={{
-                    opacity: [0.5, 1, 0.5]
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity
-                  }}
-                  className="text-2xl font-black tracking-tight text-obsidian">
-                  
+                    animate={{
+                      opacity: [0.5, 1, 0.5]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity
+                    }}
+                    className="text-2xl font-black tracking-tight text-obsidian">
+
                     Searching nearby pharmacies…
                   </motion.h2>
                   <p className="text-steelBlue font-medium">
@@ -222,63 +224,67 @@ export function Search() {
               {/* Skeleton Loader Simulation */}
               <div className="space-y-4 pt-8 border-t border-silverMist/30">
                 {[0, 1].map((i) =>
-              <div key={i} className="flex gap-4 items-center opacity-40">
+                  <div key={i} className="flex gap-4 items-center opacity-40">
                     <div className="w-12 h-12 rounded-xl bg-silverMist/30 animate-pulse" />
                     <div className="flex-1 space-y-2">
                       <div className="h-4 w-3/4 bg-silverMist/30 rounded animate-pulse" />
                       <div className="h-3 w-1/2 bg-silverMist/20 rounded animate-pulse" />
                     </div>
                   </div>
-              )}
+                )}
               </div>
             </div>
           </motion.div>
         }
       </AnimatePresence>
 
-      {/* Navbar */}
-      <nav className="max-w-[1440px] mx-auto px-8 md:px-16 py-8 flex items-center justify-between w-full">
-        <a href="/" className="flex items-center gap-1">
-          <span className="text-3xl font-black tracking-tighter text-arcticNavy">
-            surgimap
-          </span>
-        </a>
-        <div className="hidden md:flex items-center gap-12">
-          {NAV_LINKS.map((link) =>
-          <a
-            key={link}
-            href={
-            link === 'How it works' ?
-            '/how-it-works' :
-            link === 'About' ?
-            '/about' :
-            link === 'Help' ?
-            '/help' :
-            link === 'Services' ?
-            '/services' :
-            '#'
-            }
-            className="text-sm font-bold uppercase tracking-widest text-steelBlue hover:text-arcticNavy transition-colors">
-            
-              {link}
-            </a>
-          )}
-          <a
-            href="/login"
-            className="border border-arcticNavy rounded-full px-8 py-3 text-sm font-bold uppercase tracking-widest text-arcticNavy hover:bg-arcticNavy hover:text-iceWhite transition-all">
-            Login
+      {/* Navigation */}
+      <nav className="sticky top-0 z-50 bg-iceWhite/80 backdrop-blur-md border-b border-silverMist/40">
+        <div className="max-w-[1440px] mx-auto px-8 md:px-16 py-4 flex items-center justify-between">
+          <a href="/" className="flex items-center gap-1">
+            <span className="text-2xl font-black tracking-tighter text-arcticNavy">
+              surgimap
+            </span>
           </a>
-          <button className="border border-arcticNavy rounded-full px-8 py-3 text-sm font-bold uppercase tracking-widest text-arcticNavy hover:bg-arcticNavy hover:text-iceWhite transition-all">
-            Contact
+
+          <div className="hidden md:flex items-center gap-6">
+            {NAV_LINKS.map((link) =>
+              <a
+                key={link}
+                href={
+                  link === 'How it works' ? '/how-it-works' :
+                    link === 'About' ? '/about' :
+                      link === 'Help' ? '/help' :
+                        '#'
+                }
+                className="text-xs font-bold uppercase tracking-wider transition-colors text-steelBlue hover:text-arcticNavy">                      {link}
+              </a>
+            )}
+            <div className="w-px h-4 bg-silverMist mx-1" />
+            <a
+              href="/#contact"
+              className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all border ${location.hash === '#contact' && location.pathname === '/' ? 'border-arcticNavy text-arcticNavy bg-arcticNavy/10' : 'border-silverMist text-steelBlue hover:border-arcticNavy hover:text-arcticNavy'}`}>
+              Contact
+            </a>
+            <a
+              href="/login"
+              className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all border ${location.pathname === '/login' ? 'border-arcticNavy text-arcticNavy bg-arcticNavy/10' : 'border-silverMist text-steelBlue hover:border-arcticNavy hover:text-arcticNavy'}`}>
+              Login
+            </a>
+            <a
+              href="/search"
+              className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${location.pathname === '/search' ? 'bg-obsidian text-iceWhite' : 'bg-arcticNavy text-iceWhite hover:bg-obsidian'}`}>
+              Search
+            </a>
+          </div >
+
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden text-arcticNavy">
+            {isMenuOpen ? <XIcon /> : <MenuIcon />}
           </button>
-        </div>
-        <button
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="md:hidden text-arcticNavy">
-          
-          {isMenuOpen ? <XIcon /> : <MenuIcon />}
-        </button>
-      </nav>
+        </div >
+      </nav >
 
       <main className="flex-1 flex flex-col">
         {/* Hero Section */}
@@ -311,19 +317,19 @@ export function Search() {
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
                   autoFocus />
-                
+
                 {query &&
-                <button
-                  className="p-2 text-silverMist hover:text-arcticNavy transition-colors"
-                  onClick={() => setQuery('')}>
-                  
+                  <button
+                    className="p-2 text-silverMist hover:text-arcticNavy transition-colors"
+                    onClick={() => setQuery('')}>
+
                     <XIcon className="w-5 h-5" />
                   </button>
                 }
                 <button
                   className="bg-arcticNavy text-iceWhite px-8 py-4 rounded-xl font-bold uppercase tracking-widest text-sm hover:bg-obsidian transition-all ml-2"
                   onClick={() => handleSearch(query)}>
-                  
+
                   Search
                 </button>
               </div>
@@ -345,18 +351,18 @@ export function Search() {
 
             <div className="flex gap-6 overflow-x-auto pb-8 snap-x no-scrollbar">
               {QUICK_KITS.map((kit) =>
-              <button
-                key={kit.id}
-                className="flex-shrink-0 snap-start w-80 min-h-[400px] bg-white border border-silverMist rounded-[2.5rem] text-left group hover:border-arcticNavy hover:shadow-2xl hover:shadow-arcticNavy/5 transition-all flex flex-col relative overflow-hidden"
-                onClick={() => handleChipClick(kit.name)}>
-                
+                <button
+                  key={kit.id}
+                  className="flex-shrink-0 snap-start w-80 min-h-[400px] bg-white border border-silverMist rounded-[2.5rem] text-left group hover:border-arcticNavy hover:shadow-2xl hover:shadow-arcticNavy/5 transition-all flex flex-col relative overflow-hidden"
+                  onClick={() => handleChipClick(kit.name)}>
+
                   {/* Background Image with Overlay */}
                   <div className="absolute inset-0 z-0">
                     <img
-                    src={kit.image}
-                    alt={kit.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                  
+                      src={kit.image}
+                      alt={kit.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+
                     <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
                   </div>
 
@@ -371,15 +377,15 @@ export function Search() {
                     <div className="flex items-center gap-3 text-iceWhite/80 text-sm font-bold mt-auto">
                       <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
                         <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round">
-                        
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round">
+
                           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                           <polyline points="9 22 9 12 15 12 15 22" />
                         </svg>
@@ -411,31 +417,31 @@ export function Search() {
             </div>
 
             {Object.entries(FOOTER_LINKS).map(([group, links]) =>
-            <div key={group}>
+              <div key={group}>
                 <h4 className="text-iceWhite font-bold text-base uppercase tracking-widest mb-8">
                   {group}
                 </h4>
                 <ul className="space-y-4">
                   {links.map((l) =>
-                <li key={l}>
+                    <li key={l}>
                       <a
-                    href={
-                    l === 'Search' ?
-                    '/search' :
-                    l === 'How it works' ?
-                    '/how-it-works' :
-                    l === 'About' ?
-                    '/about' :
-                    l === 'Help center' ?
-                    '/help' :
-                    '#'
-                    }
-                    className="text-base text-iceWhite/70 hover:text-iceWhite transition-colors">
-                    
+                        href={
+                          l === 'Search' ?
+                            '/search' :
+                            l === 'How it works' ?
+                              '/how-it-works' :
+                              l === 'About' ?
+                                '/about' :
+                                l === 'Help center' ?
+                                  '/help' :
+                                  '#'
+                        }
+                        className="text-base text-iceWhite/70 hover:text-iceWhite transition-colors">
+
                         {l}
                       </a>
                     </li>
-                )}
+                  )}
                 </ul>
               </div>
             )}
@@ -449,32 +455,32 @@ export function Search() {
 
       {/* Mobile Menu */}
       {isMenuOpen &&
-      <div className="fixed inset-0 bg-iceWhite z-[200] p-8 flex flex-col items-center justify-center gap-12">
+        <div className="fixed inset-0 bg-iceWhite z-[200] p-8 flex flex-col items-center justify-center gap-12">
           <button
-          onClick={() => setIsMenuOpen(false)}
-          className="absolute top-8 right-8 text-arcticNavy">
-          
+            onClick={() => setIsMenuOpen(false)}
+            className="absolute top-8 right-8 text-arcticNavy">
+
             <XIcon className="w-10 h-10" />
           </button>
           {NAV_LINKS.map((link) =>
-        <a
-          key={link}
-          href={
-          link === 'How it works' ?
-          '/how-it-works' :
-          link === 'About' ?
-          '/about' :
-          link === 'Help' ?
-          '/help' :
-          link === 'Services' ?
-          '/services' :
-          '#'
-          }
-          className="text-5xl font-black tracking-tighter text-arcticNavy hover:text-glacierBlue transition-colors">
-          
+            <a
+              key={link}
+              href={
+                link === 'How it works' ?
+                  '/how-it-works' :
+                  link === 'About' ?
+                    '/about' :
+                    link === 'Help' ?
+                      '/help' :
+                      link === 'Services' ?
+                        '/services' :
+                        '#'
+              }
+              className="text-5xl font-black tracking-tighter text-arcticNavy hover:text-glacierBlue transition-colors">
+
               {link}
             </a>
-        )}
+          )}
           <a
             href="/login"
             className="text-5xl font-black tracking-tighter text-arcticNavy hover:text-glacierBlue transition-colors">
