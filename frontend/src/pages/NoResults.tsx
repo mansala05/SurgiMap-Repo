@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   SearchIcon,
   RefreshCcwIcon,
@@ -8,6 +8,7 @@ import {
 'lucide-react';
 import { motion } from 'framer-motion';
 export function NoResults() {
+  const location = useLocation();
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-iceWhite text-obsidian font-sans selection:bg-arcticNavy/10 overflow-x-hidden flex flex-col items-center justify-center py-12 px-6">

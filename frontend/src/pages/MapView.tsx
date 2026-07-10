@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeftIcon,
@@ -9,71 +9,73 @@ import {
   XIcon,
   MapPinIcon,
   ClockIcon,
-  MenuIcon } from
-'lucide-react';
+  MenuIcon
+} from
+  'lucide-react';
 import { useScreenInit } from '../useScreenInit';
-const NAV_LINKS = ['About', 'Services', 'How it works', 'Help'];
+
+const NAV_LINKS = ['About', 'How it works', 'Help'];
 const PHARMACIES = [
-{
-  id: 1,
-  name: 'Lanka Care Pharmacy',
-  status: 'Available',
-  distance: '0.8 km',
-  lastUpdated: '10 min ago',
-  phone: '+94 70 111 2222',
-  x: 18,
-  y: 28
-},
-{
-  id: 2,
-  name: 'Colombo Med Hub',
-  status: 'Low Stock',
-  distance: '1.2 km',
-  lastUpdated: '25 min ago',
-  phone: '+94 70 222 3333',
-  x: 40,
-  y: 16
-},
-{
-  id: 3,
-  name: 'Healthline Pharmacy',
-  status: 'Available',
-  distance: '1.5 km',
-  lastUpdated: '5 min ago',
-  phone: '+94 70 333 4444',
-  x: 58,
-  y: 42
-},
-{
-  id: 4,
-  name: 'City Surgical Supplies',
-  status: 'Available',
-  distance: '2.1 km',
-  lastUpdated: '1 hr ago',
-  phone: '+94 70 444 5555',
-  x: 76,
-  y: 26
-},
-{
-  id: 5,
-  name: 'Wellcare Pharmacy',
-  status: 'Low Stock',
-  distance: '2.4 km',
-  lastUpdated: '40 min ago',
-  phone: '+94 70 555 6666',
-  x: 30,
-  y: 68
-},
-{
-  id: 6,
-  name: 'Metro Pharmacy',
-  status: 'Available',
-  distance: '3.0 km',
-  lastUpdated: '15 min ago',
-  phone: '+94 70 666 7777',
-  x: 65,
-  y: 75
-}];
+  {
+    id: 1,
+    name: 'Lanka Care Pharmacy',
+    status: 'Available',
+    distance: '0.8 km',
+    lastUpdated: '10 min ago',
+    phone: '+94 70 111 2222',
+    x: 18,
+    y: 28
+  },
+  {
+    id: 2,
+    name: 'Colombo Med Hub',
+    status: 'Low Stock',
+    distance: '1.2 km',
+    lastUpdated: '25 min ago',
+    phone: '+94 70 222 3333',
+    x: 40,
+    y: 16
+  },
+  {
+    id: 3,
+    name: 'Healthline Pharmacy',
+    status: 'Available',
+    distance: '1.5 km',
+    lastUpdated: '5 min ago',
+    phone: '+94 70 333 4444',
+    x: 58,
+    y: 42
+  },
+  {
+    id: 4,
+    name: 'City Surgical Supplies',
+    status: 'Available',
+    distance: '2.1 km',
+    lastUpdated: '1 hr ago',
+    phone: '+94 70 444 5555',
+    x: 76,
+    y: 26
+  },
+  {
+    id: 5,
+    name: 'Wellcare Pharmacy',
+    status: 'Low Stock',
+    distance: '2.4 km',
+    lastUpdated: '40 min ago',
+    phone: '+94 70 555 6666',
+    x: 30,
+    y: 68
+  },
+  {
+    id: 6,
+    name: 'Metro Pharmacy',
+    status: 'Available',
+    distance: '3.0 km',
+    lastUpdated: '15 min ago',
+    phone: '+94 70 666 7777',
+    x: 65,
+    y: 75
+  }];
 
 const getStatusColors = (status: string) => {
   switch (status) {
@@ -101,6 +103,7 @@ const getStatusColors = (status: string) => {
   }
 };
 export function MapView() {
+  const location = useLocation();
   const navigate = useNavigate();
   const [activeId, setActiveId] = useState<number | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -112,56 +115,60 @@ export function MapView() {
   return (
     <div className="min-h-screen bg-iceWhite text-obsidian font-sans selection:bg-arcticNavy/10 overflow-x-hidden">
       {/* Navigation */}
-      <nav className="max-w-[1440px] mx-auto px-8 md:px-16 py-8 flex items-center justify-between bg-iceWhite sticky top-0 z-[100] border-b border-silverMist/20">
-        <div className="flex items-center gap-1">
-          <a
-            href="/"
-            className="text-3xl font-black tracking-tighter text-arcticNavy">
-            
-            surgimap
+      <nav className="sticky top-0 z-50 bg-iceWhite/80 backdrop-blur-md border-b border-silverMist/40">
+        <div className="max-w-[1440px] mx-auto px-8 md:px-16 py-4 flex items-center justify-between">
+          <a href="/" className="flex items-center gap-1">
+            <span className="text-2xl font-black tracking-tighter text-arcticNavy">
+              surgimap
+            </span>
           </a>
-        </div>
-        <div className="hidden md:flex items-center gap-12">
-          {NAV_LINKS.map((link) =>
-          <a
-            key={link}
-            href={
-              link === 'How it works' ?
-              '/how-it-works' :
-              link === 'About' ?
-              '/about' :
-              link === 'Help' ?
-              '/help' :
-              link === 'Services' ?
-              '/services' :
-              '#'
-            }
-            className="text-sm font-bold uppercase tracking-widest text-steelBlue hover:text-arcticNavy transition-colors">
-            
-              {link}
+
+          <div className="hidden md:flex items-center gap-6">
+            {NAV_LINKS.map((link) =>
+              <a
+                key={link}
+                href={
+                  link === 'How it works' ? '/how-it-works' :
+                    link === 'About' ? '/about' :
+                      link === 'Help' ? '/help' :
+                        '#'
+                }
+                className={`text-xs font-bold uppercase tracking-wider transition-colors ${link === 'About' ? 'text-arcticNavy' : 'text-steelBlue hover:text-arcticNavy'}`}>
+                {link}
+              </a>
+            )}
+            <div className="w-px h-4 bg-silverMist mx-1" />
+            <a
+              href="/#contact"
+              className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all border ${location.hash === '#contact' && location.pathname === '/' ? 'border-arcticNavy text-arcticNavy bg-arcticNavy/10' : 'border-silverMist text-steelBlue hover:border-arcticNavy hover:text-arcticNavy'}`}>
+              Contact
             </a>
-          )}
+            <a
+              href="/login"
+              className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all border ${location.pathname === '/login' ? 'border-arcticNavy text-arcticNavy bg-arcticNavy/10' : 'border-silverMist text-steelBlue hover:border-arcticNavy hover:text-arcticNavy'}`}>
+              Login
+            </a>
+            <a
+              href="/search"
+              className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${location.pathname === '/search' ? 'bg-obsidian text-iceWhite' : 'bg-arcticNavy text-iceWhite hover:bg-obsidian'}`}>
+              Search
+            </a>
+          </div >
+
           <button
-            onClick={() => navigate('/search')}
-            className="bg-arcticNavy text-iceWhite rounded-full px-8 py-3 text-sm font-bold uppercase tracking-widest hover:bg-obsidian transition-all shadow-lg shadow-arcticNavy/20">
-            
-            Find a kit
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden text-arcticNavy">
+            {isMenuOpen ? <XIcon /> : <MenuIcon />}
           </button>
-        </div>
-        <button
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="md:hidden text-arcticNavy">
-          
-          {isMenuOpen ? <XIcon /> : <MenuIcon />}
-        </button>
-      </nav>
+        </div >
+      </nav >
 
       {/* Header / Back Row */}
       <div className="max-w-[1440px] mx-auto px-8 md:px-16 py-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-silverMist/20">
         <button
           onClick={handleBack}
           className="group inline-flex items-center gap-2 text-arcticNavy font-bold uppercase tracking-widest text-xs hover:text-glacierBlue transition-colors">
-          
+
           <ArrowLeftIcon className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Back to list view
         </button>
@@ -191,7 +198,7 @@ export function MapView() {
                   height="100%"
                   viewBox="0 0 100 100"
                   preserveAspectRatio="none">
-                  
+
                   <g stroke="#d4dce6" strokeWidth="0.4" fill="none">
                     <path d="M0,20 C30,15 60,28 100,18" />
                     <path d="M0,45 C35,50 65,38 100,48" />
@@ -222,26 +229,26 @@ export function MapView() {
                       top: `${p.y}%`,
                       transform: 'translate(-50%, -100%)'
                     }}>
-                    
+
                     <div className="relative">
                       <svg
                         width="32"
                         height="40"
                         viewBox="0 0 28 34"
                         className="drop-shadow-lg">
-                        
+
                         <path
                           d="M14 0C6.3 0 0 6.3 0 14c0 9.8 14 20 14 20s14-10.2 14-20C28 6.3 21.7 0 14 0z"
                           fill={colors.pin}
                           stroke={isActive ? '#0F172A' : 'white'}
                           strokeWidth={isActive ? 2.5 : 1.5} />
-                        
+
                         <circle cx="14" cy="14" r="5" fill="white" />
                       </svg>
                       {isActive &&
-                      <motion.div
-                        layoutId="pin-ring"
-                        className="absolute -inset-2 border-2 border-arcticNavy rounded-full animate-ping opacity-20" />
+                        <motion.div
+                          layoutId="pin-ring"
+                          className="absolute -inset-2 border-2 border-arcticNavy rounded-full animate-ping opacity-20" />
 
                       }
                     </div>
@@ -252,24 +259,24 @@ export function MapView() {
               {/* Active Info Card */}
               <AnimatePresence>
                 {active &&
-                <motion.div
-                  initial={{
-                    opacity: 0,
-                    y: 20,
-                    scale: 0.95
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                    scale: 1
-                  }}
-                  exit={{
-                    opacity: 0,
-                    y: 20,
-                    scale: 0.95
-                  }}
-                  className="absolute bottom-6 left-6 right-6 bg-white/90 backdrop-blur-xl border border-silverMist rounded-[2rem] p-6 shadow-2xl z-[60]">
-                  
+                  <motion.div
+                    initial={{
+                      opacity: 0,
+                      y: 20,
+                      scale: 0.95
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      scale: 1
+                    }}
+                    exit={{
+                      opacity: 0,
+                      y: 20,
+                      scale: 0.95
+                    }}
+                    className="absolute bottom-6 left-6 right-6 bg-white/90 backdrop-blur-xl border border-silverMist rounded-[2rem] p-6 shadow-2xl z-[60]">
+
                     <div className="flex justify-between items-start mb-6">
                       <div>
                         <h3 className="text-xl font-black tracking-tight text-obsidian mb-2">
@@ -277,8 +284,8 @@ export function MapView() {
                         </h3>
                         <div className="flex flex-wrap items-center gap-3">
                           <span
-                          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${getStatusColors(active.status).bg} ${getStatusColors(active.status).text}`}>
-                          
+                            className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${getStatusColors(active.status).bg} ${getStatusColors(active.status).text}`}>
+
                             {active.status}
                           </span>
                           <span className="flex items-center gap-1.5 text-xs font-bold text-steelBlue">
@@ -292,9 +299,9 @@ export function MapView() {
                         </div>
                       </div>
                       <button
-                      onClick={() => setActiveId(null)}
-                      className="p-2 hover:bg-silverMist/20 rounded-full transition-colors">
-                      
+                        onClick={() => setActiveId(null)}
+                        className="p-2 hover:bg-silverMist/20 rounded-full transition-colors">
+
                         <XIcon className="w-5 h-5 text-steelBlue" />
                       </button>
                     </div>
@@ -321,10 +328,10 @@ export function MapView() {
             {/* Legend */}
             <div className="flex gap-6 mt-6 px-4">
               {['Available', 'Low Stock'].map((status) =>
-              <div key={status} className="flex items-center gap-2.5">
+                <div key={status} className="flex items-center gap-2.5">
                   <div
-                  className={`w-2.5 h-2.5 rounded-full ${getStatusColors(status).dot} shadow-sm`} />
-                
+                    className={`w-2.5 h-2.5 rounded-full ${getStatusColors(status).dot} shadow-sm`} />
+
                   <span className="text-[10px] font-black uppercase tracking-widest text-steelBlue">
                     {status}
                   </span>
@@ -346,22 +353,22 @@ export function MapView() {
                     x: 4
                   }}
                   className={`p-6 rounded-[2rem] border cursor-pointer transition-all duration-300 ${isActive ? 'bg-arcticNavy border-arcticNavy shadow-xl shadow-arcticNavy/20' : 'bg-white border-silverMist hover:border-arcticNavy/30 hover:shadow-lg'}`}>
-                  
+
                   <div className="flex justify-between items-start mb-4">
                     <h4
                       className={`font-black tracking-tight text-sm ${isActive ? 'text-iceWhite' : 'text-obsidian'}`}>
-                      
+
                       {p.name}
                     </h4>
                     <span
                       className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${isActive ? 'bg-white/20 text-iceWhite' : `${colors.bg} ${colors.text}`}`}>
-                      
+
                       {p.status}
                     </span>
                   </div>
                   <div
                     className={`flex flex-col gap-1.5 ${isActive ? 'text-iceWhite/70' : 'text-steelBlue/60'}`}>
-                    
+
                     <p className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
                       <MapPinIcon className="w-3 h-3" />
                       {p.distance} away
@@ -397,11 +404,11 @@ export function MapView() {
               </h4>
               <ul className="space-y-4">
                 {['About', 'Features', 'How it works', 'Search'].map((l) =>
-                <li key={l}>
+                  <li key={l}>
                     <a
-                    href="#"
-                    className="text-sm font-bold text-iceWhite/70 hover:text-iceWhite transition-colors">
-                    
+                      href="#"
+                      className="text-sm font-bold text-iceWhite/70 hover:text-iceWhite transition-colors">
+
                       {l}
                     </a>
                   </li>
@@ -414,11 +421,11 @@ export function MapView() {
               </h4>
               <ul className="space-y-4">
                 {['Help center', 'Contact', 'Privacy and Terms'].map((l) =>
-                <li key={l}>
+                  <li key={l}>
                     <a
-                    href="#"
-                    className="text-sm font-bold text-iceWhite/70 hover:text-iceWhite transition-colors">
-                    
+                      href="#"
+                      className="text-sm font-bold text-iceWhite/70 hover:text-iceWhite transition-colors">
+
                       {l}
                     </a>
                   </li>

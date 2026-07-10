@@ -11,7 +11,7 @@ import { Login } from './pages/auth/Login';
 import { PharmacyDashboard } from './pages/pharmacy/PharmacyDashboard';
 import { AdminPanel } from './pages/admin/AdminPanel';
 import { SyncLogs } from './pages/admin/SyncLogs';
-import { Services } from './pages/Services';
+import { Stories } from './pages/Stories';
 export function App() {
   return (
     <BrowserRouter>
@@ -27,7 +27,7 @@ export function App() {
         <Route path="/pharmacy/dashboard" element={<PharmacyDashboard />} />
         <Route path="/admin" element={<AdminPanel />} />
         <Route path="/admin/sync-logs" element={<SyncLogs />} />
-        <Route path="/services" element={<Services />} />
+        <Route path="/stories" element={<Stories />} />
       </Routes>
     </BrowserRouter>);
 
