@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -12,7 +12,6 @@ import {
   MenuIcon
 } from
   'lucide-react';
-import { useScreenInit } from '../useScreenInit';
 
 const NAV_LINKS = ['About', 'How it works', 'Help'];
 const PHARMACIES = [
@@ -107,7 +106,6 @@ export function MapView() {
   const navigate = useNavigate();
   const [activeId, setActiveId] = useState<number | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  useScreenInit();
   const active = PHARMACIES.find((p) => p.id === activeId);
   const handleBack = () => {
     navigate('/?q=Sterile+Dressing+Kit');

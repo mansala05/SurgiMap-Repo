@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRightIcon, EyeIcon, EyeOffIcon } from 'lucide-react';
-import { useScreenInit } from '../../useScreenInit';
 type Tab = 'customer' | 'pharmacy' | 'admin';
 const TABS: {
   key: Tab;
@@ -45,7 +44,6 @@ const TAB_CONFIG: Record<
   }
 };
 export function Login() {
-  useScreenInit();
   const [activeTab, setActiveTab] = useState<Tab>('customer');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

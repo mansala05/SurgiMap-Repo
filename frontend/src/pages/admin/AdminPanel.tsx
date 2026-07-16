@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -6,7 +6,6 @@ import {
   LogOutIcon,
   CheckCircleIcon,
   XCircleIcon,
-  ClockIcon,
   ActivityIcon,
   BuildingIcon,
   LayoutDashboardIcon,
@@ -14,9 +13,7 @@ import {
   HeartPulseIcon,
   SearchIcon,
   ChevronRightIcon,
-  MoreVerticalIcon,
 } from 'lucide-react'
-import { useScreenInit } from '../../useScreenInit.js'
 type SyncStatus = 'connected' | 'error' | 'syncing'
 interface Pharmacy {
   id: number
@@ -136,7 +133,6 @@ export function AdminPanel() {
   const [pharmacies, setPharmacies] = useState(INITIAL_PHARMACIES)
   const [syncingAll, setSyncingAll] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  useScreenInit()
   const connected = pharmacies.filter((p) => p.status === 'connected').length
   const errors = pharmacies.filter((p) => p.status === 'error').length
   const totalLowStock = pharmacies.reduce((a, p) => a + p.lowStock, 0)

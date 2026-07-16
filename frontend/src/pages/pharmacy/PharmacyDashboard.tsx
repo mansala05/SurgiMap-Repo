@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   PackageIcon,
@@ -15,14 +15,12 @@ import {
   PlusIcon,
   MinusIcon,
   UserIcon,
-  MapPinIcon,
   ArrowRightIcon,
   TrendingUpIcon,
   TrendingDownIcon,
   CalendarIcon,
   FilterIcon,
 } from 'lucide-react'
-import { useScreenInit } from '../../useScreenInit.js'
 const PHARMACY_NAME = 'City Med Pharmacy'
 const INITIAL_STOCK = [
   {
@@ -148,15 +146,13 @@ function getStatus(qty: number) {
 }
 export function PharmacyDashboard() {
   const navigate = useNavigate()
-  const location = useLocation()
   const [activeTab, setActiveTab] = useState('stock')
   const [stock, setStock] = useState(INITIAL_STOCK)
-  const [orders, setOrders] = useState(INITIAL_ORDERS)
+  const orders = INITIAL_ORDERS
   const [saved, setSaved] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [lastSync, setLastSync] = useState('Jul 1, 2026, 9:14 AM')
   const [searchQuery, setSearchQuery] = useState('')
-  useScreenInit()
   const totalAvailable = stock.filter((s) => s.quantity >= 4).length
   const lowStock = stock.filter((s) => s.quantity > 0 && s.quantity <= 3).length
   const outOfStock = stock.filter((s) => s.quantity === 0).length

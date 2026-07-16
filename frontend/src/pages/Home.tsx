@@ -55,23 +55,6 @@ const TESTIMONIALS = [
     logo: 'Lanka Medical'
   }];
 
-const CONTACT = [
-  {
-    icon: <MailIcon className="w-6 h-6" />,
-    label: 'Email support',
-    detail: 'support@surgimap.lk'
-  },
-  {
-    icon: <PhoneIcon className="w-6 h-6" />,
-    label: 'Call support',
-    detail: '+94 70 242 6077'
-  },
-  {
-    icon: <MapPinIcon className="w-6 h-6" />,
-    label: 'Mail our office',
-    detail: 'Colombo, Sri Lanka'
-  }];
-
 const FOOTER_LINKS = {
   Company: ['About', 'Features', 'How it works', 'Search'],
   Support: ['Help center', 'Contact', 'Privacy and Terms']

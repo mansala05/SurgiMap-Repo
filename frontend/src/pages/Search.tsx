@@ -1,4 +1,4 @@
-import React, { useState, Component } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SearchIcon, XIcon, MenuIcon, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

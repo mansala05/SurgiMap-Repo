@@ -1,15 +1,9 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  ActivityIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  RefreshCwIcon,
   LogOutIcon,
-  ShieldIcon,
   ClockIcon,
-  FilterIcon,
   LayoutDashboardIcon,
   HistoryIcon,
   HeartPulseIcon,
@@ -17,7 +11,6 @@ import {
   DownloadIcon,
   CalendarIcon,
 } from 'lucide-react'
-import { useScreenInit } from '../../useScreenInit.js'
 type LogStatus = 'success' | 'error'
 interface SyncLog {
   id: number
@@ -177,7 +170,6 @@ export function SyncLogs() {
   const location = useLocation()
   const [filter, setFilter] = useState<FilterType>('all')
   const [searchQuery, setSearchQuery] = useState('')
-  useScreenInit()
   const todayLogs = ALL_LOGS.filter((l) => l.timestamp.startsWith('Jul 1'))
   const successToday = todayLogs.filter((l) => l.status === 'success').length
   const errorToday = todayLogs.filter((l) => l.status === 'error').length
