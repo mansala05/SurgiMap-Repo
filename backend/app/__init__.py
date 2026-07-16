@@ -1,0 +1,1 @@
+"""SurgiMap backend application package."""
