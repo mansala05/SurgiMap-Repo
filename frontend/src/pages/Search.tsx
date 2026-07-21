@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { SearchIcon, XIcon, MenuIcon, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { SearchIcon, XIcon, MenuIcon } from 'lucide-react';
 
 const NAV_LINKS = ['About', 'How it works', 'Help'];
 const FOOTER_LINKS = {
@@ -11,99 +10,49 @@ const FOOTER_LINKS = {
 const QUICK_KITS = [
   {
     id: 1,
-    name: 'Laparoscopic Basic Set',
-    category: 'Minimally Invasive',
-    pharmacies: '12 pharmacies',
+    name: 'Caesarean Surgical Kit',
+    category: 'Obstetrics',
     image:
       'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=800'
   },
   {
     id: 2,
-    name: 'Orthopedic Trauma Kit',
-    category: 'Orthopedics',
-    pharmacies: '24 pharmacies',
+    name: 'Appendectomy Surgical Kit',
+    category: 'General Surgery',
     image:
       'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&q=80&w=800'
   },
   {
     id: 3,
-    name: 'Cardiovascular Set',
-    category: 'Cardiac',
-    pharmacies: '18 pharmacies',
+    name: 'General Surgery Kit',
+    category: 'General Surgery',
     image:
       'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=800'
   },
   {
     id: 4,
-    name: 'General Surgery Pack',
-    category: 'General',
-    pharmacies: '15 pharmacies',
+    name: 'Suture Pack',
+    category: 'Wound Closure',
     image:
       'https://images.unsplash.com/photo-1587854692152-cbe660dbbb88?auto=format&fit=crop&q=80&w=800'
   },
   {
     id: 5,
-    name: 'Neurosurgery Cranial Kit',
-    category: 'Neurosurgery',
-    pharmacies: '20 pharmacies',
+    name: 'Dressing Kit',
+    category: 'Wound Care',
     image:
       'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&q=80&w=800'
-  },
-  {
-    id: 6,
-    name: 'Ophthalmology Micro Set',
-    category: 'Ophthalmology',
-    pharmacies: '10 pharmacies',
-    image:
-      'https://images.unsplash.com/photo-1579154235828-4519f39f93cb?auto=format&fit=crop&q=80&w=800'
-  },
-  {
-    id: 7,
-    name: 'Arthroscopy Instrument Set',
-    category: 'Orthopedics',
-    pharmacies: '16 pharmacies',
-    image:
-      'https://images.unsplash.com/photo-1583947215259-38e31be8751f?auto=format&fit=crop&q=80&w=800'
-  },
-  {
-    id: 8,
-    name: 'Cesarean Section Kit',
-    category: 'OB/GYN',
-    pharmacies: '14 pharmacies',
-    image:
-      'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800'
-  },
-  {
-    id: 9,
-    name: 'Endoscopy Flexible Set',
-    category: 'Gastroenterology',
-    pharmacies: '8 pharmacies',
-    image:
-      'https://images.unsplash.com/photo-1581595221475-19906ca447fd?auto=format&fit=crop&q=80&w=800'
-  },
-  {
-    id: 10,
-    name: 'Thoracic Surgery Pack',
-    category: 'Thoracic',
-    pharmacies: '22 pharmacies',
-    image:
-      'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=800'
   }];
 
 export function Search() {
   const location = useLocation();
   const [query, setQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   function handleSearch(value: string) {
     const term = value.trim();
     if (!term) return;
-    setIsLoading(true);
-    // Simulate searching delay
-    setTimeout(() => {
-      navigate(`/?q=${encodeURIComponent(term)}`);
-    }, 2500);
+    navigate(`/?q=${encodeURIComponent(term)}`);
   }
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') handleSearch(query);
@@ -114,130 +63,6 @@ export function Search() {
   }
   return (
     <div className="min-h-screen bg-iceWhite text-obsidian font-sans selection:bg-arcticNavy/10 overflow-x-hidden flex flex-col">
-      <AnimatePresence>
-        {isLoading &&
-          <motion.div
-            initial={{
-              opacity: 0
-            }}
-            animate={{
-              opacity: 1
-            }}
-            exit={{
-              opacity: 0
-            }}
-            className="fixed inset-0 z-[300] bg-iceWhite flex flex-col items-center justify-center p-8">
-
-            <div className="max-w-md w-full text-center space-y-12">
-              {/* Branding */}
-              <motion.div
-                initial={{
-                  y: 20,
-                  opacity: 0
-                }}
-                animate={{
-                  y: 0,
-                  opacity: 1
-                }}
-                transition={{
-                  delay: 0.2
-                }}
-                className="flex flex-col items-center gap-4">
-
-                <span className="text-4xl font-black tracking-tighter text-arcticNavy">
-                  surgimap
-                </span>
-                <div className="flex gap-2">
-                  {[0, 1, 2, 3].map((i) =>
-                    <motion.div
-                      key={i}
-                      animate={{
-                        scale: [1, 1.5, 1],
-                        opacity: [0.3, 1, 0.3]
-                      }}
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        delay: i * 0.2
-                      }}
-                      className="w-2 h-2 rounded-full bg-arcticNavy" />
-
-                  )}
-                </div>
-              </motion.div>
-
-              {/* Loader & Message */}
-              <div className="space-y-6">
-                <div className="relative flex justify-center">
-                  <motion.div
-                    animate={{
-                      rotate: 360
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: 'linear'
-                    }}
-                    className="text-arcticNavy">
-
-                    <Loader2 className="w-16 h-16 stroke-[1.5]" />
-                  </motion.div>
-                  <motion.div
-                    initial={{
-                      scale: 0.8,
-                      opacity: 0
-                    }}
-                    animate={{
-                      scale: 1,
-                      opacity: 1
-                    }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      repeatType: 'reverse'
-                    }}
-                    className="absolute inset-0 flex items-center justify-center">
-
-                    <div className="w-8 h-8 bg-glacierBlue/20 rounded-full blur-xl" />
-                  </motion.div>
-                </div>
-
-                <div className="space-y-2">
-                  <motion.h2
-                    animate={{
-                      opacity: [0.5, 1, 0.5]
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity
-                    }}
-                    className="text-2xl font-black tracking-tight text-obsidian">
-
-                    Searching nearby pharmacies…
-                  </motion.h2>
-                  <p className="text-steelBlue font-medium">
-                    Checking real-time stock for "{query}"
-                  </p>
-                </div>
-              </div>
-
-              {/* Skeleton Loader Simulation */}
-              <div className="space-y-4 pt-8 border-t border-silverMist/30">
-                {[0, 1].map((i) =>
-                  <div key={i} className="flex gap-4 items-center opacity-40">
-                    <div className="w-12 h-12 rounded-xl bg-silverMist/30 animate-pulse" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-3/4 bg-silverMist/30 rounded animate-pulse" />
-                      <div className="h-3 w-1/2 bg-silverMist/20 rounded animate-pulse" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        }
-      </AnimatePresence>
-
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-iceWhite/80 backdrop-blur-md border-b border-silverMist/40">
         <div className="max-w-[1440px] mx-auto px-8 md:px-16 py-4 flex items-center justify-between">
@@ -267,11 +92,6 @@ export function Search() {
               Contact
             </a>
             <a
-              href="/login"
-              className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all border ${location.pathname === '/login' ? 'border-arcticNavy text-arcticNavy bg-arcticNavy/10' : 'border-silverMist text-steelBlue hover:border-arcticNavy hover:text-arcticNavy'}`}>
-              Login
-            </a>
-            <a
               href="/search"
               className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${location.pathname === '/search' ? 'bg-obsidian text-iceWhite' : 'bg-arcticNavy text-iceWhite hover:bg-obsidian'}`}>
               Search
@@ -299,8 +119,7 @@ export function Search() {
               surgical kit, fast
             </h1>
             <p className="text-steelBlue text-lg md:text-xl font-medium leading-relaxed max-w-2xl mx-auto">
-              Search our comprehensive database of surgical instrument kits by
-              name, specialty, or procedure.
+              Enter a surgical kit name to check live stock synced from connected pharmacies.
             </p>
 
             {/* Search Box */}
@@ -312,7 +131,7 @@ export function Search() {
                 <input
                   className="flex-1 bg-transparent border-none outline-none py-4 text-lg font-medium text-obsidian placeholder:text-silverMist"
                   type="text"
-                  placeholder="e.g. Laparoscopic Basic Set, Orthopedic Trauma..."
+                  placeholder="e.g. C Section Kit, Appendix Kit, Dressing Kit..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -390,7 +209,7 @@ export function Search() {
                           <polyline points="9 22 9 12 15 12 15 22" />
                         </svg>
                       </div>
-                      {kit.pharmacies}
+                      Check live availability
                     </div>
                   </div>
                 </button>
@@ -481,11 +300,6 @@ export function Search() {
               {link}
             </a>
           )}
-          <a
-            href="/login"
-            className="text-5xl font-black tracking-tighter text-arcticNavy hover:text-glacierBlue transition-colors">
-            Login
-          </a>
           <button className="bg-arcticNavy text-iceWhite rounded-full px-16 py-5 text-lg font-bold uppercase tracking-widest shadow-2xl">
             Contact
           </button>

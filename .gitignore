@@ -1,6 +1,8 @@
 # Python
 backend/venv/
+backend/.venv/
 __pycache__/
+.pytest_cache/
 *.pyc
 
 # Node / React
@@ -9,6 +11,10 @@ frontend/dist/
 
 # System files
 .DS_Store
+.vscode/
+
+# Temporary working files
+tmp/
 
 # Environment files
 .env

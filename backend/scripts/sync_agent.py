@@ -3,17 +3,25 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import sqlite3
 import urllib.error
 import urllib.request
 
+from dotenv import load_dotenv
+
 from app.services.master_catalog import normalize_item_name
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
+load_dotenv(BACKEND_DIR / ".env")
 DATA_DIR = BACKEND_DIR / "data"
 OUTPUT_FILE = BACKEND_DIR / "sync_payload.json"
-BACKEND_SYNC_URL = "http://127.0.0.1:8000/sync/inventory"
+BACKEND_SYNC_URL = os.getenv(
+    "SURGIMAP_SYNC_URL",
+    "http://127.0.0.1:8000/sync/inventory",
+)
+SYNC_API_KEY = os.getenv("SURGIMAP_SYNC_API_KEY", "surgimap-local-demo-key")
 TOTAL_PHARMACIES = 10
 
 
@@ -58,7 +66,10 @@ def send_payload(payload: list[dict[str, object]]) -> None:
     request = urllib.request.Request(
         BACKEND_SYNC_URL,
         data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "X-Sync-Key": SYNC_API_KEY,
+        },
         method="POST",
     )
     try:

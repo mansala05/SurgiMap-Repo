@@ -163,11 +163,6 @@ export function HowItWorks() {
               Contact
             </a>
             <a
-              href="/login"
-              className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all border ${location.pathname === '/login' ? 'border-arcticNavy text-arcticNavy bg-arcticNavy/10' : 'border-silverMist text-steelBlue hover:border-arcticNavy hover:text-arcticNavy'}`}>
-              Login
-            </a>
-            <a
               href="/search"
               className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${location.pathname === '/search' ? 'bg-obsidian text-iceWhite' : 'bg-arcticNavy text-iceWhite hover:bg-obsidian'}`}>
               Search
@@ -416,11 +411,6 @@ export function HowItWorks() {
               {link}
             </a>
           )}
-          <a
-            href="/login"
-            className="text-5xl font-black tracking-tighter text-arcticNavy hover:text-glacierBlue transition-colors">
-            Login
-          </a>
           <button className="bg-arcticNavy text-iceWhite rounded-full px-16 py-5 text-lg font-bold uppercase tracking-widest shadow-2xl">
             Contact
           </button>

@@ -20,15 +20,19 @@ The React frontend then allows users to search this centralized inventory data.
 
 ## 3. Architecture Explanation
 
-Our architecture has four main parts.
+Our architecture has five main parts.
 
 First, we have 10 dummy SQLite pharmacy databases. These represent independent pharmacy inventory systems.
 
 Second, we have the Python Local Sync Agent. It reads the pharmacy stock data, converts different local item names into standard surgical kit names, calculates the stock status, and sends the data to the backend.
 
-Third, we have the FastAPI backend. It receives the synced inventory data and provides a search API.
+The sync channel is protected by a shared API key. The backend also recalculates the canonical kit name and availability status, rejects duplicate batch items, and does not expose a public stock-update endpoint.
 
-Fourth, we have the React frontend. This is the user-facing interface where patients or relatives can search for surgical kits and contact pharmacies.
+Third, we have the FastAPI backend. It receives the synced inventory data, records searches, filters out zero stock, and provides the search API.
+
+Fourth, we have the central database. PostgreSQL is used for the proposal-aligned setup, while SQLite remains available as a zero-setup fallback for the local demo.
+
+Fifth, we have the React frontend. This is the user-facing interface where patients or relatives can search for surgical kits, view results on a map, and contact pharmacies.
 
 ## 4. Live Demo Flow
 
@@ -38,15 +42,21 @@ First, we start the FastAPI backend.
 
 Then we run the Python Sync Agent. The sync agent reads all 10 pharmacy databases and sends 50 inventory records to the backend.
 
+The agent automatically includes the secure sync key configured in `backend/.env`; this key is never sent to the patient-facing browser.
+
 Now we open the React frontend.
 
 Let us search for “caesarean”.
+
+The browser asks for location permission. When we allow it, the backend calculates straight-line distance and returns the nearest matching pharmacies first. We can also refresh the current location or select a nearby area manually. If location is unavailable, the core search still works using stock-level ordering.
 
 The system shows only pharmacies where the Caesarean Surgical Kit is Available or Low Stock. Pharmacies where the item is Not Available are hidden from the user.
 
 Each pharmacy card shows the availability badge, address, distance, last updated time, and contact buttons.
 
-The user can call the pharmacy, contact through WhatsApp, or open the map location before travelling.
+The interface intentionally shows the simple Available or Low Stock status instead of exposing complex inventory quantities. If an update is older than one hour, SurgiMap warns the user to call before travelling.
+
+The user can call the pharmacy, contact through WhatsApp, view all results on the embedded Google Map, or open Google Maps driving directions before travelling. The result order uses straight-line distance for a fast and predictable search; Google Maps handles the actual road route.
 
 ## 5. Master Catalog Feature
 
@@ -54,7 +64,7 @@ Different pharmacies may use different names for the same surgical kit. For exam
 
 Our master catalog maps these different local names into one standard name: “Caesarean Surgical Kit”.
 
-This makes the search more reliable and user-friendly.
+This makes the search more reliable and user-friendly. The search also understands partial phrases such as “c section”, spelling variations, extra spaces, and short catalog codes such as “CSK”. If no stocked item matches, the interface offers the closest searchable kit names.
 
 ## 6. Sync Update Demonstration
 
@@ -82,11 +92,10 @@ This can support faster decision-making during medical emergencies.
 
 In the future, this prototype can be improved by connecting real pharmacy inventory systems using safe read-only access.
 
-We can also add live location-based distance calculation, pharmacy dashboards, more medical items, and demand analytics.
+We can also add secure role-based pharmacy/admin authentication, pharmacy dashboards, more medical items, demand analytics, and real read-only pharmacy connectors. Those operational portals are intentionally kept outside this patient-search MVP so the demo does not present mock login behavior as a finished security feature.
 
 ## 9. Closing
 
 SurgiMap is not just a pharmacy listing website. It demonstrates a practical inventory-sync approach for emergency healthcare supply discovery.
 
 Thank you.
-

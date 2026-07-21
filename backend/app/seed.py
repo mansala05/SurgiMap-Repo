@@ -5,16 +5,16 @@ from sqlalchemy.orm import Session
 from app import models
 
 DEMO_PHARMACIES = [
-    {"id": 1, "name": "City Med Pharmacy", "address": "Colombo 07", "phone": "0771234567", "whatsapp": "94771234567"},
-    {"id": 2, "name": "CarePlus Pharmacy", "address": "Nugegoda", "phone": "0772345678", "whatsapp": "94772345678"},
-    {"id": 3, "name": "MediQuick Pharmacy", "address": "Borella", "phone": "0773456789", "whatsapp": "94773456789"},
-    {"id": 4, "name": "HealthHub Pharmacy", "address": "Rajagiriya", "phone": "0774567890", "whatsapp": "94774567890"},
-    {"id": 5, "name": "LifeCare Pharmacy", "address": "Dehiwala", "phone": "0775678901", "whatsapp": "94775678901"},
-    {"id": 6, "name": "Surgical Care Pharmacy", "address": "Maharagama", "phone": "0776789012", "whatsapp": "94776789012"},
-    {"id": 7, "name": "Green Cross Pharmacy", "address": "Kirulapone", "phone": "0777890123", "whatsapp": "94777890123"},
-    {"id": 8, "name": "Royal Med Pharmacy", "address": "Kollupitiya", "phone": "0778901234", "whatsapp": "94778901234"},
-    {"id": 9, "name": "Family Care Pharmacy", "address": "Battaramulla", "phone": "0779012345", "whatsapp": "94779012345"},
-    {"id": 10, "name": "MedLine Pharmacy", "address": "Wellawatte", "phone": "0770123456", "whatsapp": "94770123456"},
+    {"id": 1, "name": "City Med Pharmacy", "address": "Colombo 07", "phone": "0771234567", "whatsapp": "94771234567", "latitude": 6.9066, "longitude": 79.8648},
+    {"id": 2, "name": "CarePlus Pharmacy", "address": "Nugegoda", "phone": "0772345678", "whatsapp": "94772345678", "latitude": 6.8649, "longitude": 79.8997},
+    {"id": 3, "name": "MediQuick Pharmacy", "address": "Borella", "phone": "0773456789", "whatsapp": "94773456789", "latitude": 6.9147, "longitude": 79.8779},
+    {"id": 4, "name": "HealthHub Pharmacy", "address": "Rajagiriya", "phone": "0774567890", "whatsapp": "94774567890", "latitude": 6.9097, "longitude": 79.8943},
+    {"id": 5, "name": "LifeCare Pharmacy", "address": "Dehiwala", "phone": "0775678901", "whatsapp": "94775678901", "latitude": 6.8511, "longitude": 79.8656},
+    {"id": 6, "name": "Surgical Care Pharmacy", "address": "Maharagama", "phone": "0776789012", "whatsapp": "94776789012", "latitude": 6.8480, "longitude": 79.9265},
+    {"id": 7, "name": "Green Cross Pharmacy", "address": "Kirulapone", "phone": "0777890123", "whatsapp": "94777890123", "latitude": 6.8770, "longitude": 79.8734},
+    {"id": 8, "name": "Royal Med Pharmacy", "address": "Kollupitiya", "phone": "0778901234", "whatsapp": "94778901234", "latitude": 6.9105, "longitude": 79.8507},
+    {"id": 9, "name": "Family Care Pharmacy", "address": "Battaramulla", "phone": "0779012345", "whatsapp": "94779012345", "latitude": 6.9022, "longitude": 79.9197},
+    {"id": 10, "name": "MedLine Pharmacy", "address": "Wellawatte", "phone": "0770123456", "whatsapp": "94770123456", "latitude": 6.8747, "longitude": 79.8603},
 ]
 
 

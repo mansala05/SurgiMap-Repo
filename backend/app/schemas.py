@@ -27,6 +27,7 @@ class StockResult(BaseModel):
     whatsapp: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    distance_km: Optional[float] = None
     kit_name: str
     quantity: int
     status: str
@@ -40,9 +41,3 @@ class InventorySyncItem(BaseModel):
     quantity: int = Field(ge=0)
     status: str
     last_updated: datetime
-
-
-class StockUpsert(BaseModel):
-    pharmacy_id: int = Field(gt=0)
-    kit_id: int = Field(gt=0)
-    quantity: int = Field(ge=0)
