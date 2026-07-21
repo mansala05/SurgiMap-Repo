@@ -20,15 +20,17 @@ The React frontend then allows users to search this centralized inventory data.
 
 ## 3. Architecture Explanation
 
-Our architecture has four main parts.
+Our architecture has five main parts.
 
 First, we have 10 dummy SQLite pharmacy databases. These represent independent pharmacy inventory systems.
 
 Second, we have the Python Local Sync Agent. It reads the pharmacy stock data, converts different local item names into standard surgical kit names, calculates the stock status, and sends the data to the backend.
 
-Third, we have the FastAPI backend. It receives the synced inventory data and provides a search API.
+Third, we have the FastAPI backend. It receives the synced inventory data, records searches, filters out zero stock, and provides the search API.
 
-Fourth, we have the React frontend. This is the user-facing interface where patients or relatives can search for surgical kits and contact pharmacies.
+Fourth, we have the central database. PostgreSQL is used for the proposal-aligned setup, while SQLite remains available as a zero-setup fallback for the local demo.
+
+Fifth, we have the React frontend. This is the user-facing interface where patients or relatives can search for surgical kits, view results on a map, and contact pharmacies.
 
 ## 4. Live Demo Flow
 
@@ -42,9 +44,13 @@ Now we open the React frontend.
 
 Let us search for “caesarean”.
 
+The browser asks for location permission. When we allow it, the backend calculates distance and returns the nearest matching pharmacies first. If location is unavailable, the core search still works using stock-level ordering.
+
 The system shows only pharmacies where the Caesarean Surgical Kit is Available or Low Stock. Pharmacies where the item is Not Available are hidden from the user.
 
 Each pharmacy card shows the availability badge, address, distance, last updated time, and contact buttons.
+
+The interface intentionally shows the simple Available or Low Stock status instead of exposing complex inventory quantities. If an update is older than one hour, SurgiMap warns the user to call before travelling.
 
 The user can call the pharmacy, contact through WhatsApp, or open the map location before travelling.
 
@@ -82,11 +88,10 @@ This can support faster decision-making during medical emergencies.
 
 In the future, this prototype can be improved by connecting real pharmacy inventory systems using safe read-only access.
 
-We can also add live location-based distance calculation, pharmacy dashboards, more medical items, and demand analytics.
+We can also add pharmacy dashboards, more medical items, demand analytics, and real read-only pharmacy connectors.
 
 ## 9. Closing
 
 SurgiMap is not just a pharmacy listing website. It demonstrates a practical inventory-sync approach for emergency healthcare supply discovery.
 
 Thank you.
-

@@ -15,6 +15,8 @@ import {
 } from
   'lucide-react';
 import { searchStock, type StockResult } from '../lib/api';
+import { requestUserLocation } from '../lib/location';
+import { formatStockAge, isStockStale } from '../lib/stock';
   
 
 const NAV_LINKS = ['About', 'How it works', 'Help'];
@@ -110,7 +112,8 @@ export function Home() {
     setIsSearching(true);
     setSearchError('');
 
-    searchStock(query, controller.signal)
+    requestUserLocation()
+      .then((userLocation) => searchStock(query, { signal: controller.signal, location: userLocation }))
       .then(setResults)
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') return;
@@ -188,11 +191,20 @@ export function Home() {
         </div>
 
         <div className="w-full max-w-4xl flex items-center justify-between mb-8">
-          <p className="text-steelBlue font-bold">
-            {isSearching ? 'Searching pharmacies…' : `${results.length} pharmacies found`}
-          </p>
+          <div>
+            <p className="text-steelBlue font-bold">
+              {isSearching ? 'Searching pharmacies…' : `${results.length} pharmacies found`}
+            </p>
+            {!isSearching && results.length > 0 &&
+              <p className="text-xs text-steelBlue/70 mt-1">
+                {results.some((result) => result.distance_km !== null)
+                  ? 'Nearest pharmacies shown first'
+                  : 'Enable browser location to sort by distance'}
+              </p>
+            }
+          </div>
           <button
-            onClick={() => navigate('/map-view')}
+            onClick={() => navigate(`/map-view?q=${encodeURIComponent(query)}`)}
             className="flex items-center gap-2 bg-white border border-silverMist text-arcticNavy px-6 py-2.5 rounded-xl font-bold text-sm uppercase tracking-widest hover:border-arcticNavy transition-all shadow-sm">
 
             <MapPinIcon className="w-4 h-4" />
@@ -241,7 +253,7 @@ export function Home() {
                     <span
                       className={`font-black text-sm uppercase tracking-widest px-4 py-2 rounded-full bg-white border border-silverMist shadow-sm ${pharmacy.status === 'Available' ? 'text-green-600' : 'text-yellow-600'}`}>
 
-                      {pharmacy.status} · {pharmacy.quantity}
+                      {pharmacy.status}
                     </span>
                   </div>
 
@@ -262,14 +274,20 @@ export function Home() {
                           Location
                         </span>{' '}
                         {pharmacy.address}
+                        {pharmacy.distance_km !== null ? ` · ${pharmacy.distance_km.toFixed(1)} km away` : ''}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
                       <ZapIcon className="w-5 h-5 text-arcticNavy opacity-50" />
                       <p className="text-xs font-bold text-steelBlue uppercase tracking-widest">
-                        Updated {new Date(pharmacy.last_updated).toLocaleString()}
+                        Updated {formatStockAge(pharmacy.last_updated)}
                       </p>
                     </div>
+                    {isStockStale(pharmacy.last_updated) &&
+                      <p className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                        This update is over an hour old. Please call before travelling.
+                      </p>
+                    }
                   </div>
 
                   <div className="flex flex-wrap gap-6 pt-6 border-t border-silverMist/30">

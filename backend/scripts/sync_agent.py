@@ -3,17 +3,24 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import sqlite3
 import urllib.error
 import urllib.request
 
+from dotenv import load_dotenv
+
 from app.services.master_catalog import normalize_item_name
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
+load_dotenv(BACKEND_DIR / ".env")
 DATA_DIR = BACKEND_DIR / "data"
 OUTPUT_FILE = BACKEND_DIR / "sync_payload.json"
-BACKEND_SYNC_URL = "http://127.0.0.1:8000/sync/inventory"
+BACKEND_SYNC_URL = os.getenv(
+    "SURGIMAP_SYNC_URL",
+    "http://127.0.0.1:8000/sync/inventory",
+)
 TOTAL_PHARMACIES = 10
 
 
