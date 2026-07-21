@@ -92,16 +92,29 @@ Search accepts canonical names, local pharmacy aliases, partial phrases, common 
 ```bash
 cd frontend
 npm install
+cp .env.example .env
 npm run dev
 ```
 
 Frontend URL: `http://localhost:5173`
 
-The frontend connects to the backend at `http://127.0.0.1:8000` by default.
-For another backend URL, copy `frontend/.env.example` to `frontend/.env` and
-change `VITE_API_BASE_URL` before starting Vite.
+The frontend connects to the backend at `http://127.0.0.1:8000` by default. For
+another backend URL, change `VITE_API_BASE_URL` before starting Vite.
 
-The browser asks for location permission on the first search. If permission is granted, results show distance and are sorted nearest-first. If permission is denied, search, map, Call, and WhatsApp still work without distance sorting.
+The results map uses the Google Maps JavaScript API. Enable that API in a Google
+Cloud project, place a browser-restricted key in `VITE_GOOGLE_MAPS_API_KEY`, and
+set `VITE_GOOGLE_MAP_ID` when using your own map ID. `DEMO_MAP_ID` is suitable for
+local development. Restrict the browser key to the frontend's HTTP referrers
+before sharing or deploying the demo. If no key is configured, the page shows a
+safe setup message and still offers an external Google Maps link.
+
+The browser asks for location permission on the first search. Users can retry
+current-location detection or select Colombo, Nugegoda, Dehiwala, Maharagama, or
+Battaramulla manually. When a location is available, the backend calculates the
+straight-line distance and returns pharmacies nearest-first. Google Maps provides
+the interactive marker map and driving directions; the displayed sorting distance
+is not road-travel distance. Without a location, search, map, Call, WhatsApp, and
+Directions still work without distance sorting.
 
 Authentication and pharmacy/admin dashboards are future scope in this MVP. Earlier UI concepts remain in the source tree for later development, but they are not exposed as application routes and no mock login is presented to users.
 

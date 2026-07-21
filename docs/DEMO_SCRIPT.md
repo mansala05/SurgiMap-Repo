@@ -48,7 +48,7 @@ Now we open the React frontend.
 
 Let us search for “caesarean”.
 
-The browser asks for location permission. When we allow it, the backend calculates distance and returns the nearest matching pharmacies first. If location is unavailable, the core search still works using stock-level ordering.
+The browser asks for location permission. When we allow it, the backend calculates straight-line distance and returns the nearest matching pharmacies first. We can also refresh the current location or select a nearby area manually. If location is unavailable, the core search still works using stock-level ordering.
 
 The system shows only pharmacies where the Caesarean Surgical Kit is Available or Low Stock. Pharmacies where the item is Not Available are hidden from the user.
 
@@ -56,7 +56,7 @@ Each pharmacy card shows the availability badge, address, distance, last updated
 
 The interface intentionally shows the simple Available or Low Stock status instead of exposing complex inventory quantities. If an update is older than one hour, SurgiMap warns the user to call before travelling.
 
-The user can call the pharmacy, contact through WhatsApp, or open the map location before travelling.
+The user can call the pharmacy, contact through WhatsApp, view all results on the embedded Google Map, or open Google Maps driving directions before travelling. The result order uses straight-line distance for a fast and predictable search; Google Maps handles the actual road route.
 
 ## 5. Master Catalog Feature
 

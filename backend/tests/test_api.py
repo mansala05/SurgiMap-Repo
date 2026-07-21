@@ -49,6 +49,15 @@ def test_health_sync_and_search():
             "status": "healthy",
             "database": "connected",
         }
+        preflight_response = client.options(
+            "/search",
+            headers={
+                "Origin": "http://localhost:5174",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        assert preflight_response.status_code == 200
+        assert preflight_response.headers["access-control-allow-origin"] == "http://localhost:5174"
 
         assert client.post("/sync/inventory", json=SAMPLE_PAYLOAD).status_code == 401
         assert client.post(
@@ -88,6 +97,8 @@ def test_health_sync_and_search():
         nearby_results = nearby_response.json()
         assert nearby_results[0]["pharmacy_name"] == "CarePlus Pharmacy"
         assert nearby_results[0]["distance_km"] == 0.0
+        nearby_distances = [result["distance_km"] for result in nearby_results]
+        assert nearby_distances == sorted(nearby_distances)
 
         invalid_location_response = client.get(
             "/search",

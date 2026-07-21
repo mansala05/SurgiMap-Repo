@@ -11,11 +11,19 @@ import {
   MailIcon,
   PhoneIcon,
   PhoneCallIcon,
-  MessageCircleIcon
+  MessageCircleIcon,
+  NavigationIcon
 } from
   'lucide-react';
 import { searchStock, suggestKits, type StockResult } from '../lib/api';
-import { requestUserLocation } from '../lib/location';
+import {
+  AREA_LOCATIONS,
+  requestCurrentLocation,
+  resolveUserLocation,
+  setManualLocation,
+  type LocationStatus,
+  type UserLocation
+} from '../lib/location';
 import { formatStockAge, isStockStale } from '../lib/stock';
   
 
@@ -96,6 +104,9 @@ export function Home() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>('requesting');
+  const [locationRefresh, setLocationRefresh] = useState(0);
 
   useEffect(() => {
     setSearchInput(query);
@@ -115,8 +126,12 @@ export function Home() {
     setSearchError('');
     setSuggestions([]);
 
-    requestUserLocation()
-      .then((userLocation) => searchStock(query, { signal: controller.signal, location: userLocation }))
+    resolveUserLocation()
+      .then((locationResult) => {
+        setUserLocation(locationResult.location);
+        setLocationStatus(locationResult.status);
+        return searchStock(query, { signal: controller.signal, location: locationResult.location });
+      })
       .then(async (searchResults) => {
         setResults(searchResults);
         if (searchResults.length === 0) {
@@ -133,7 +148,24 @@ export function Home() {
       });
 
     return () => controller.abort();
-  }, [query]);
+  }, [locationRefresh, query]);
+
+  const handleUseCurrentLocation = async () => {
+    setLocationStatus('requesting');
+    const locationResult = await requestCurrentLocation(true);
+    setUserLocation(locationResult.location);
+    setLocationStatus(locationResult.status);
+    if (locationResult.location) setLocationRefresh((value) => value + 1);
+  };
+
+  const handleAreaChange = (areaLabel: string) => {
+    const area = AREA_LOCATIONS.find((option) => option.label === areaLabel);
+    if (!area) return;
+    setManualLocation(area);
+    setUserLocation(area);
+    setLocationStatus('ready');
+    setLocationRefresh((value) => value + 1);
+  };
 
   const handleSearch = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -198,6 +230,46 @@ export function Home() {
           )}
         </div>
 
+        <div className="w-full max-w-4xl mb-6 bg-white border border-silverMist rounded-2xl px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${locationStatus === 'ready' ? 'bg-green-50 text-green-600' : locationStatus === 'requesting' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-700'}`}>
+              <MapPinIcon className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-black text-obsidian">
+                {locationStatus === 'ready' && userLocation
+                  ? userLocation.label
+                  : locationStatus === 'requesting'
+                    ? 'Detecting your location…'
+                    : locationStatus === 'denied'
+                      ? 'Location permission denied'
+                      : locationStatus === 'timeout'
+                        ? 'Location request timed out'
+                        : 'Location unavailable'}
+              </p>
+              <p className="text-xs text-steelBlue mt-0.5">
+                {locationStatus === 'ready' ? 'Results are sorted nearest first' : 'Choose an area or try current location again'}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              type="button"
+              disabled={locationStatus === 'requesting'}
+              onClick={handleUseCurrentLocation}
+              className="px-4 py-2.5 rounded-xl border border-arcticNavy/20 text-arcticNavy text-xs font-black uppercase tracking-wider hover:bg-arcticNavy hover:text-white disabled:opacity-50 transition-colors">
+              {locationStatus === 'requesting' ? 'Locating…' : userLocation?.source === 'current' ? 'Refresh location' : 'Use current location'}
+            </button>
+            <select
+              value={userLocation?.source === 'manual' ? userLocation.label : ''}
+              onChange={(event) => handleAreaChange(event.target.value)}
+              className="px-4 py-2.5 rounded-xl border border-silverMist bg-white text-xs font-bold text-steelBlue focus:outline-none focus:border-arcticNavy">
+              <option value="" disabled>Select area</option>
+              {AREA_LOCATIONS.map((area) => <option key={area.label} value={area.label}>{area.label}</option>)}
+            </select>
+          </div>
+        </div>
+
         <div className="w-full max-w-4xl flex items-center justify-between mb-8">
           <div>
             <p className="text-steelBlue font-bold">
@@ -205,15 +277,18 @@ export function Home() {
             </p>
             {!isSearching && results.length > 0 &&
               <p className="text-xs text-steelBlue/70 mt-1">
-                {results.some((result) => result.distance_km !== null)
-                  ? 'Nearest pharmacies shown first'
-                  : 'Enable browser location to sort by distance'}
+                {locationStatus === 'ready' && results.every((result) => result.distance_km !== null)
+                  ? `Nearest pharmacies shown first from ${userLocation?.label}`
+                  : 'Distance sorting is off'}
               </p>
             }
           </div>
           {results.length > 0 &&
             <button
-              onClick={() => navigate(`/map-view?q=${encodeURIComponent(query)}`)}
+              onClick={() => navigate(
+                `/map-view?q=${encodeURIComponent(query)}`,
+                { state: { results, userLocation } }
+              )}
               className="flex items-center gap-2 bg-white border border-silverMist text-arcticNavy px-6 py-2.5 rounded-xl font-bold text-sm uppercase tracking-widest hover:border-arcticNavy transition-all shadow-sm">
 
               <MapPinIcon className="w-4 h-4" />
@@ -333,14 +408,14 @@ export function Home() {
                     </a>}
                     <a
                       href={pharmacy.latitude !== null && pharmacy.longitude !== null
-                        ? `https://www.google.com/maps/search/?api=1&query=${pharmacy.latitude},${pharmacy.longitude}`
+                        ? `https://www.google.com/maps/dir/?api=1${userLocation ? `&origin=${userLocation.latitude},${userLocation.longitude}` : ''}&destination=${pharmacy.latitude},${pharmacy.longitude}&travelmode=driving`
                         : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${pharmacy.pharmacy_name} ${pharmacy.address}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-steelBlue hover:text-arcticNavy font-bold text-sm uppercase tracking-widest transition-colors">
 
-                      <MapPinIcon className="w-5 h-5" />
-                      Map
+                      <NavigationIcon className="w-5 h-5" />
+                      Directions
                     </a>
                   </div>
                 </div>

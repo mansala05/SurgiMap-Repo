@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { divIcon, latLngBounds } from 'leaflet';
-import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeftIcon,
   ClockIcon,
@@ -11,55 +9,39 @@ import {
   PhoneIcon,
   SearchIcon
 } from 'lucide-react';
-import 'leaflet/dist/leaflet.css';
+import { GoogleResultsMap } from '../components/GoogleResultsMap';
 import { searchStock, type StockResult } from '../lib/api';
-import { requestUserLocation } from '../lib/location';
+import { resolveUserLocation, type LocationStatus, type UserLocation } from '../lib/location';
 import { formatStockAge, isStockStale } from '../lib/stock';
 
-const COLOMBO_CENTER: [number, number] = [6.9271, 79.8612];
 type MappedStockResult = StockResult & { latitude: number; longitude: number };
+type MapNavigationState = {
+  results?: StockResult[];
+  userLocation?: UserLocation | null;
+};
 
 function hasCoordinates(result: StockResult): result is MappedStockResult {
   return result.latitude !== null && result.longitude !== null;
 }
 
 const getStatusColors = (status: string) => status === 'Available'
-  ? { bg: 'bg-green-100', text: 'text-green-700', pin: '#16a34a' }
-  : { bg: 'bg-amber-100', text: 'text-amber-700', pin: '#d97706' };
-
-function markerIcon(status: string, isActive: boolean) {
-  const { pin } = getStatusColors(status);
-  return divIcon({
-    className: '',
-    html: `<div style="width:${isActive ? 34 : 28}px;height:${isActive ? 34 : 28}px;background:${pin};border:4px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 5px 14px rgba(15,23,42,.3)"><span style="display:block;width:8px;height:8px;background:white;border-radius:50%;margin:${isActive ? 9 : 6}px"></span></div>`,
-    iconSize: [isActive ? 34 : 28, isActive ? 34 : 28],
-    iconAnchor: [isActive ? 17 : 14, isActive ? 34 : 28]
-  });
-}
-
-function FitResults({ results }: { results: MappedStockResult[] }) {
-  const map = useMap();
-
-  useEffect(() => {
-    const points = results.map(
-      (result) => [result.latitude, result.longitude] as [number, number]
-    );
-
-    if (points.length === 1) map.setView(points[0], 14);
-    if (points.length > 1) map.fitBounds(latLngBounds(points), { padding: [45, 45] });
-  }, [map, results]);
-
-  return null;
-}
+  ? { bg: 'bg-green-100', text: 'text-green-700' }
+  : { bg: 'bg-amber-100', text: 'text-amber-700' };
 
 export function MapView() {
   const navigate = useNavigate();
+  const routeLocation = useLocation();
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q')?.trim() || '';
-  const [results, setResults] = useState<StockResult[]>([]);
-  const [activeId, setActiveId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(Boolean(query));
+  const navigationState = routeLocation.state as MapNavigationState | null;
+  const initialResults = navigationState?.results ?? [];
+  const initialUserLocation = navigationState?.userLocation ?? null;
+  const [results, setResults] = useState<StockResult[]>(initialResults);
+  const [activeId, setActiveId] = useState<number | null>(initialResults[0]?.pharmacy_id ?? null);
+  const [isLoading, setIsLoading] = useState(Boolean(query) && initialResults.length === 0);
   const [error, setError] = useState('');
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(initialUserLocation);
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>(initialUserLocation ? 'ready' : 'requesting');
 
   useEffect(() => {
     if (!query) {
@@ -68,11 +50,21 @@ export function MapView() {
       return;
     }
 
+    if (initialResults.length > 0) {
+      setIsLoading(false);
+      setError('');
+      return;
+    }
+
     const controller = new AbortController();
     setIsLoading(true);
     setError('');
-    requestUserLocation()
-      .then((userLocation) => searchStock(query, { signal: controller.signal, location: userLocation }))
+    resolveUserLocation()
+      .then((locationResult) => {
+        setUserLocation(locationResult.location);
+        setLocationStatus(locationResult.status);
+        return searchStock(query, { signal: controller.signal, location: locationResult.location });
+      })
       .then((data) => {
         setResults(data);
         setActiveId(data[0]?.pharmacy_id ?? null);
@@ -86,7 +78,7 @@ export function MapView() {
       });
 
     return () => controller.abort();
-  }, [query]);
+  }, [query, initialResults.length]);
 
   const mappedResults = useMemo(
     () => results.filter(hasCoordinates),
@@ -134,6 +126,11 @@ export function MapView() {
             “{query}” <span className="text-arcticNavy/40 mx-2">—</span>
             {isLoading ? 'Loading…' : `${results.length} pharmacies`}
           </p>
+          <p className="text-xs text-steelBlue mt-1">
+            {locationStatus === 'ready' && userLocation
+              ? `Nearest first from ${userLocation.label}`
+              : 'Distance sorting is off'}
+          </p>
         </div>
       </header>
 
@@ -148,25 +145,12 @@ export function MapView() {
 
         <div className="flex flex-col lg:flex-row gap-8 min-h-[620px]">
           <section className="flex-[1.8] min-h-[520px] rounded-[2.5rem] overflow-hidden border border-silverMist shadow-2xl relative z-0">
-            <MapContainer center={COLOMBO_CENTER} zoom={12} scrollWheelZoom className="h-full min-h-[620px] w-full">
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <FitResults results={mappedResults} />
-              {mappedResults.map((pharmacy) => (
-                <Marker
-                  key={pharmacy.pharmacy_id}
-                  position={[pharmacy.latitude, pharmacy.longitude]}
-                  icon={markerIcon(pharmacy.status, pharmacy.pharmacy_id === activeId)}
-                  eventHandlers={{ click: () => setActiveId(pharmacy.pharmacy_id) }}>
-                  <Popup>
-                    <strong>{pharmacy.pharmacy_name}</strong><br />
-                    {pharmacy.kit_name}: {pharmacy.status}
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
+            <GoogleResultsMap
+              results={mappedResults}
+              activeId={activeId}
+              userLocation={userLocation}
+              onActive={setActiveId}
+            />
           </section>
 
           <aside className="flex-1 flex flex-col gap-4 max-h-[620px] overflow-y-auto pr-2 custom-scrollbar">
@@ -204,7 +188,7 @@ export function MapView() {
                         ? <a href={`https://wa.me/${pharmacy.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()} className="flex items-center justify-center gap-1 bg-[#25D366] text-white py-2 rounded-lg text-[10px] font-black"><MessageCircleIcon className="w-3 h-3" />Chat</a>
                         : <span />}
                       <a
-                        href={`https://www.google.com/maps/dir/?api=1&destination=${pharmacy.latitude},${pharmacy.longitude}`}
+                        href={`https://www.google.com/maps/dir/?api=1${userLocation ? `&origin=${userLocation.latitude},${userLocation.longitude}` : ''}&destination=${pharmacy.latitude},${pharmacy.longitude}&travelmode=driving`}
                         target="_blank"
                         rel="noreferrer"
                         onClick={(event) => event.stopPropagation()}
