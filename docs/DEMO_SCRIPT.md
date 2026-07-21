@@ -88,7 +88,7 @@ This can support faster decision-making during medical emergencies.
 
 In the future, this prototype can be improved by connecting real pharmacy inventory systems using safe read-only access.
 
-We can also add pharmacy dashboards, more medical items, demand analytics, and real read-only pharmacy connectors.
+We can also add secure role-based pharmacy/admin authentication, pharmacy dashboards, more medical items, demand analytics, and real read-only pharmacy connectors. Those operational portals are intentionally kept outside this patient-search MVP so the demo does not present mock login behavior as a finished security feature.
 
 ## 9. Closing
 

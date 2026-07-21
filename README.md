@@ -99,6 +99,8 @@ change `VITE_API_BASE_URL` before starting Vite.
 
 The browser asks for location permission on the first search. If permission is granted, results show distance and are sorted nearest-first. If permission is denied, search, map, Call, and WhatsApp still work without distance sorting.
 
+Authentication and pharmacy/admin dashboards are future scope in this MVP. Earlier UI concepts remain in the source tree for later development, but they are not exposed as application routes and no mock login is presented to users.
+
 ## Tests
 
 ```bash
