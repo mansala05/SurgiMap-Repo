@@ -116,7 +116,7 @@ the interactive marker map and driving directions; the displayed sorting distanc
 is not road-travel distance. Without a location, search, map, Call, WhatsApp, and
 Directions still work without distance sorting.
 
-Authentication and pharmacy/admin dashboards are future scope in this MVP. Earlier UI concepts remain in the source tree for later development, but they are not exposed as application routes and no mock login is presented to users.
+Authentication and pharmacy/admin dashboards are future scope in this MVP. Mock operational portals are not included, so the demo does not present unfinished login or authorization behavior to users.
 
 ## Tests
 

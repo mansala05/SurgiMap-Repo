@@ -41,9 +41,3 @@ class InventorySyncItem(BaseModel):
     quantity: int = Field(ge=0)
     status: str
     last_updated: datetime
-
-
-class StockUpsert(BaseModel):
-    pharmacy_id: int = Field(gt=0)
-    kit_id: int = Field(gt=0)
-    quantity: int = Field(ge=0)
