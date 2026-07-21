@@ -76,20 +76,26 @@ export function GoogleResultsMap({
     const markers: google.maps.marker.AdvancedMarkerElement[] = [];
     const bounds = new google.maps.LatLngBounds();
 
-    results.forEach((pharmacy) => {
+    results.forEach((pharmacy, index) => {
       const isActive = pharmacy.pharmacy_id === activeId;
       const position = { lat: pharmacy.latitude, lng: pharmacy.longitude };
       const pin = new markerLibrary.PinElement({
         background: pharmacy.status === 'Available' ? '#16a34a' : '#d97706',
-        borderColor: '#ffffff',
+        borderColor: isActive ? '#172033' : '#ffffff',
         glyphColor: '#ffffff',
-        scale: isActive ? 1.35 : 1
+        glyphText: String(index + 1),
+        scale: isActive ? 1.55 : 1.22
       });
+      const markerContent = document.createElement('div');
+      markerContent.style.filter = isActive
+        ? 'drop-shadow(0 6px 8px rgba(15, 23, 42, 0.5))'
+        : 'drop-shadow(0 4px 5px rgba(15, 23, 42, 0.35))';
+      markerContent.append(pin.element);
       const marker = new markerLibrary.AdvancedMarkerElement({
         map,
         position,
-        title: `${pharmacy.pharmacy_name} - ${pharmacy.status}`,
-        content: pin.element,
+        title: `${index + 1}. ${pharmacy.pharmacy_name} - ${pharmacy.status}`,
+        content: markerContent,
         zIndex: isActive ? 20 : 10
       });
       marker.addListener('click', () => onActive(pharmacy.pharmacy_id));
@@ -177,5 +183,14 @@ export function GoogleResultsMap({
     );
   }
 
-  return <div ref={mapElementRef} className="h-full min-h-[620px] w-full" aria-label="Google Map of matching pharmacies" />;
+  return (
+    <div className="relative h-full min-h-[620px] w-full">
+      <div ref={mapElementRef} className="absolute inset-0" aria-label="Google Map of matching pharmacies" />
+      <div className="pointer-events-none absolute left-4 top-4 z-10 flex flex-wrap gap-2 rounded-2xl border border-white/80 bg-white/95 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-obsidian shadow-lg backdrop-blur-sm">
+        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-green-600 ring-2 ring-white" />Available</span>
+        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-amber-600 ring-2 ring-white" />Low stock</span>
+        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-blue-600 ring-2 ring-white" />You</span>
+      </div>
+    </div>
+  );
 }

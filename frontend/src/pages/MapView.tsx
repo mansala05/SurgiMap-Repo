@@ -84,6 +84,10 @@ export function MapView() {
     () => results.filter(hasCoordinates),
     [results]
   );
+  const markerNumberByPharmacyId = useMemo(
+    () => new Map(mappedResults.map((result, index) => [result.pharmacy_id, index + 1])),
+    [mappedResults]
+  );
   const backUrl = query ? `/?q=${encodeURIComponent(query)}` : '/search';
 
   if (!query) {
@@ -157,6 +161,7 @@ export function MapView() {
             {results.map((pharmacy) => {
               const isActive = pharmacy.pharmacy_id === activeId;
               const colors = getStatusColors(pharmacy.status);
+              const markerNumber = markerNumberByPharmacyId.get(pharmacy.pharmacy_id);
               return (
                 <div
                   key={pharmacy.pharmacy_id}
@@ -168,7 +173,10 @@ export function MapView() {
                   tabIndex={0}
                   className={`text-left p-6 rounded-[2rem] border transition-all ${isActive ? 'bg-arcticNavy border-arcticNavy shadow-xl' : 'bg-white border-silverMist hover:border-arcticNavy/30'}`}>
                   <div className="flex justify-between items-start gap-3 mb-4">
-                    <h2 className={`font-black tracking-tight ${isActive ? 'text-white' : 'text-obsidian'}`}>{pharmacy.pharmacy_name}</h2>
+                    <div className="flex min-w-0 items-center gap-3">
+                      {markerNumber && <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black ${isActive ? 'bg-white text-arcticNavy' : 'bg-arcticNavy text-white'}`}>{markerNumber}</span>}
+                      <h2 className={`font-black tracking-tight ${isActive ? 'text-white' : 'text-obsidian'}`}>{pharmacy.pharmacy_name}</h2>
+                    </div>
                     <span className={`shrink-0 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${isActive ? 'bg-white/20 text-white' : `${colors.bg} ${colors.text}`}`}>
                       {pharmacy.status}
                     </span>
