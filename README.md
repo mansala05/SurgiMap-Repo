@@ -83,6 +83,8 @@ GET http://127.0.0.1:8000/search?item_name=caesarean&user_latitude=6.8649&user_l
 
 When both coordinates are supplied, results are sorted nearest-first and include `distance_km`. Without them, results fall back to stock-level and pharmacy-name ordering. Zero-stock pharmacies are never returned.
 
+Search accepts canonical names, local pharmacy aliases, partial phrases, common spelling variations, and catalog codes such as `CSK`, `ASK`, `GSK`, `STP`, and `DRK`. When no stocked item matches, `GET /search/suggestions?q=...` returns the closest searchable kit names.
+
 ## Run the frontend
 
 ```bash

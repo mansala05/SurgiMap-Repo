@@ -1,3 +1,12 @@
+"""Manual surgical-kit catalog and user-search matching helpers."""
+
+from __future__ import annotations
+
+from collections.abc import Iterable
+from difflib import SequenceMatcher
+import re
+
+
 MASTER_CATALOG = {
     # Caesarean Kit variations
     "c section kit": "Caesarean Surgical Kit",
@@ -53,37 +62,126 @@ MASTER_CATALOG = {
     "wound dressing pack": "Dressing Kit",
     "sterile dressing kit": "Dressing Kit",
 
-    # Laparoscopy Kit variations
+    # Future catalog items
     "laparoscopy kit": "Laparoscopy Kit",
     "laparoscopic surgery kit": "Laparoscopy Kit",
     "lap surgery kit": "Laparoscopy Kit",
     "laparoscopic kit": "Laparoscopy Kit",
     "keyhole surgery kit": "Laparoscopy Kit",
-
-    # Catheter Kit variations
     "catheter kit": "Catheter Kit",
     "urinary catheter kit": "Catheter Kit",
     "foley catheter kit": "Catheter Kit",
     "catheterization kit": "Catheter Kit",
     "cath kit": "Catheter Kit",
-
-    # IV Kit variations
     "iv kit": "IV Administration Kit",
     "iv set": "IV Administration Kit",
     "intravenous kit": "IV Administration Kit",
     "drip set": "IV Administration Kit",
     "iv administration kit": "IV Administration Kit",
     "iv cannula kit": "IV Administration Kit",
-
-    # Biopsy Kit variations
     "biopsy kit": "Biopsy Kit",
     "tissue biopsy kit": "Biopsy Kit",
     "biopsy set": "Biopsy Kit",
     "core biopsy kit": "Biopsy Kit",
 }
 
-def normalize_item_name(local_item_name):
-    key = local_item_name.strip().lower()
-    if key in MASTER_CATALOG:
-        return MASTER_CATALOG[key]
-    return local_item_name
+CATALOG_CODES = {
+    "csk": "Caesarean Surgical Kit",
+    "lscs": "Caesarean Surgical Kit",
+    "ask": "Appendectomy Surgical Kit",
+    "gsk": "General Surgery Kit",
+    "stp": "Suture Pack",
+    "drk": "Dressing Kit",
+    "lpk": "Laparoscopy Kit",
+    "ctk": "Catheter Kit",
+    "ivk": "IV Administration Kit",
+    "bpk": "Biopsy Kit",
+}
+
+
+def normalize_search_text(value: str) -> str:
+    """Normalize punctuation, case, and repeated whitespace for matching."""
+    normalized = value.casefold().replace("&", " and ")
+    normalized = re.sub(r"[^a-z0-9]+", " ", normalized)
+    return " ".join(normalized.split())
+
+
+NORMALIZED_ALIASES = {
+    normalize_search_text(alias): standard_name
+    for alias, standard_name in MASTER_CATALOG.items()
+}
+NORMALIZED_CODES = {
+    normalize_search_text(code): standard_name
+    for code, standard_name in CATALOG_CODES.items()
+}
+STANDARD_NAMES = tuple(sorted(set(MASTER_CATALOG.values()) | set(CATALOG_CODES.values())))
+
+SEARCH_TERMS: dict[str, set[str]] = {name: {normalize_search_text(name)} for name in STANDARD_NAMES}
+for alias, standard_name in NORMALIZED_ALIASES.items():
+    SEARCH_TERMS[standard_name].add(alias)
+for code, standard_name in NORMALIZED_CODES.items():
+    SEARCH_TERMS[standard_name].add(code)
+
+
+def normalize_item_name(local_item_name: str) -> str:
+    """Map a local pharmacy label to its canonical name during inventory sync."""
+    key = normalize_search_text(local_item_name)
+    return NORMALIZED_ALIASES.get(key, NORMALIZED_CODES.get(key, local_item_name.strip()))
+
+
+def _term_score(query: str, term: str, *, suggestion: bool = False) -> float:
+    if query == term:
+        return 100.0
+    if len(query) >= 2 and term.startswith(query):
+        return 88.0 - min(len(term) - len(query), 20) / 10
+    if len(query) >= 3 and query in term:
+        return 80.0 - min(len(term) - len(query), 20) / 10
+    if len(term) >= 3 and term in query:
+        return 74.0
+
+    similarity = SequenceMatcher(None, query, term).ratio()
+    threshold = 0.42 if suggestion else 0.68
+    return similarity * 70 if similarity >= threshold else 0.0
+
+
+def rank_catalog_matches(
+    query: str,
+    *,
+    allowed_names: Iterable[str] | None = None,
+    suggestions: bool = False,
+) -> list[str]:
+    """Return canonical names ranked by exact, partial, then fuzzy relevance."""
+    normalized_query = normalize_search_text(query)
+    if not normalized_query:
+        return []
+
+    allowed = set(allowed_names) if allowed_names is not None else set(STANDARD_NAMES)
+    scored: list[tuple[float, str]] = []
+    for standard_name, terms in SEARCH_TERMS.items():
+        if standard_name not in allowed:
+            continue
+        score = max(
+            _term_score(normalized_query, term, suggestion=suggestions)
+            for term in terms
+        )
+        if score > 0:
+            scored.append((score, standard_name))
+
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return [standard_name for _, standard_name in scored]
+
+
+def find_matching_standard_names(query: str) -> list[str]:
+    return rank_catalog_matches(query)
+
+
+def suggest_standard_names(
+    query: str,
+    available_names: Iterable[str],
+    limit: int = 3,
+) -> list[str]:
+    return rank_catalog_matches(
+        query,
+        allowed_names=available_names,
+        suggestions=True,
+    )[:limit]

@@ -45,3 +45,12 @@ export async function searchStock(
 
   return response.json() as Promise<StockResult[]>;
 }
+
+export async function suggestKits(query: string, signal?: AbortSignal): Promise<string[]> {
+  const url = new URL('/search/suggestions', API_BASE_URL);
+  url.searchParams.set('q', query);
+
+  const response = await fetch(url, { signal });
+  if (!response.ok) return [];
+  return response.json() as Promise<string[]>;
+}

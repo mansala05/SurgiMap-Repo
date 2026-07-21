@@ -7,6 +7,10 @@ os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB}"
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.services.master_catalog import (
+    find_matching_standard_names,
+    normalize_item_name,
+)
 
 
 SAMPLE_PAYLOAD = [
@@ -77,6 +81,34 @@ def test_health_sync_and_search():
             params={"item_name": "caesarean", "user_latitude": 6.8649},
         )
         assert invalid_location_response.status_code == 400
+
+        invalid_search_response = client.get(
+            "/search",
+            params={"item_name": "---"},
+        )
+        assert invalid_search_response.status_code == 400
+
+        for search_term in ("c section", "CSK", "cesareen", "  Caesarean   KIT  "):
+            flexible_response = client.get(
+                "/search",
+                params={"item_name": search_term},
+            )
+            assert flexible_response.status_code == 200
+            assert len(flexible_response.json()) == 2
+
+        suggestion_response = client.get(
+            "/search/suggestions",
+            params={"q": "cesarin"},
+        )
+        assert suggestion_response.status_code == 200
+        assert suggestion_response.json()[0] == "Caesarean Surgical Kit"
+
+
+def test_master_catalog_matching():
+    assert normalize_item_name("  C-SECTION   KIT ") == "Caesarean Surgical Kit"
+    assert find_matching_standard_names("appendix")[0] == "Appendectomy Surgical Kit"
+    assert find_matching_standard_names("DRK")[0] == "Dressing Kit"
+    assert "General Surgery Kit" in find_matching_standard_names("surgery")
 
 
 def teardown_module():

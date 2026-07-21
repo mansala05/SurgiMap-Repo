@@ -14,7 +14,7 @@ import {
   MessageCircleIcon
 } from
   'lucide-react';
-import { searchStock, type StockResult } from '../lib/api';
+import { searchStock, suggestKits, type StockResult } from '../lib/api';
 import { requestUserLocation } from '../lib/location';
 import { formatStockAge, isStockStale } from '../lib/stock';
   
@@ -93,6 +93,7 @@ export function Home() {
   const query = searchParams.get('q') || '';
   const [searchInput, setSearchInput] = useState(query);
   const [results, setResults] = useState<StockResult[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
 
@@ -103,6 +104,7 @@ export function Home() {
   useEffect(() => {
     if (!query) {
       setResults([]);
+      setSuggestions([]);
       setSearchError('');
       setIsSearching(false);
       return;
@@ -111,10 +113,16 @@ export function Home() {
     const controller = new AbortController();
     setIsSearching(true);
     setSearchError('');
+    setSuggestions([]);
 
     requestUserLocation()
       .then((userLocation) => searchStock(query, { signal: controller.signal, location: userLocation }))
-      .then(setResults)
+      .then(async (searchResults) => {
+        setResults(searchResults);
+        if (searchResults.length === 0) {
+          setSuggestions(await suggestKits(query, controller.signal));
+        }
+      })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') return;
         setResults([]);
@@ -203,13 +211,15 @@ export function Home() {
               </p>
             }
           </div>
-          <button
-            onClick={() => navigate(`/map-view?q=${encodeURIComponent(query)}`)}
-            className="flex items-center gap-2 bg-white border border-silverMist text-arcticNavy px-6 py-2.5 rounded-xl font-bold text-sm uppercase tracking-widest hover:border-arcticNavy transition-all shadow-sm">
+          {results.length > 0 &&
+            <button
+              onClick={() => navigate(`/map-view?q=${encodeURIComponent(query)}`)}
+              className="flex items-center gap-2 bg-white border border-silverMist text-arcticNavy px-6 py-2.5 rounded-xl font-bold text-sm uppercase tracking-widest hover:border-arcticNavy transition-all shadow-sm">
 
-            <MapPinIcon className="w-4 h-4" />
-            View on Map
-          </button>
+              <MapPinIcon className="w-4 h-4" />
+              View on Map
+            </button>
+          }
         </div>
 
         {searchError &&
@@ -222,7 +232,21 @@ export function Home() {
         {!isSearching && !searchError && results.length === 0 &&
           <div className="w-full max-w-4xl mb-8 rounded-2xl border border-silverMist bg-white p-10 text-center">
             <p className="text-xl font-black text-arcticNavy">No in-stock pharmacies found</p>
-            <p className="mt-2 text-steelBlue">Try another kit name or one of the suggestions above.</p>
+            <p className="mt-2 text-steelBlue">
+              {suggestions.length > 0 ? 'Did you mean one of these kits?' : 'Try another kit name or a common abbreviation.'}
+            </p>
+            {suggestions.length > 0 &&
+              <div className="mt-5 flex flex-wrap justify-center gap-2">
+                {suggestions.map((suggestion) =>
+                  <button
+                    key={suggestion}
+                    onClick={() => navigate(`/?q=${encodeURIComponent(suggestion)}`)}
+                    className="rounded-full border border-arcticNavy/30 bg-arcticNavy/5 px-4 py-2 text-sm font-bold text-arcticNavy hover:bg-arcticNavy hover:text-white transition-colors">
+                    {suggestion}
+                  </button>
+                )}
+              </div>
+            }
           </div>
         }
 

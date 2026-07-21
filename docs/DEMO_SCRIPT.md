@@ -60,7 +60,7 @@ Different pharmacies may use different names for the same surgical kit. For exam
 
 Our master catalog maps these different local names into one standard name: “Caesarean Surgical Kit”.
 
-This makes the search more reliable and user-friendly.
+This makes the search more reliable and user-friendly. The search also understands partial phrases such as “c section”, spelling variations, extra spaces, and short catalog codes such as “CSK”. If no stocked item matches, the interface offers the closest searchable kit names.
 
 ## 6. Sync Update Demonstration
 

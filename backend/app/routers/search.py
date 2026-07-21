@@ -6,7 +6,11 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.database import get_db
-from app.services.master_catalog import normalize_item_name
+from app.services.master_catalog import (
+    find_matching_standard_names,
+    normalize_search_text,
+    suggest_standard_names,
+)
 
 router = APIRouter(prefix="/search", tags=["Search"])
 
@@ -57,21 +61,32 @@ def search_by_kit_name(
     raw_query = (item_name or kit_name or q or "").strip()
     if not raw_query:
         raise HTTPException(status_code=400, detail="Search query cannot be empty")
+    normalized_search_query = normalize_search_text(raw_query)
+    if len(normalized_search_query) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail="Search query must contain at least two letters or numbers",
+        )
     if (user_latitude is None) != (user_longitude is None):
         raise HTTPException(
             status_code=400,
             detail="user_latitude and user_longitude must be provided together",
         )
 
-    normalized_query = normalize_item_name(raw_query)
-    rows = (
+    matching_names = find_matching_standard_names(raw_query)
+    stock_query = (
         db.query(models.Stock)
         .join(models.Pharmacy)
         .join(models.SurgicalKit)
-        .filter(models.SurgicalKit.standard_name.ilike(f"%{normalized_query}%"))
         .filter(models.Stock.quantity > 0)
-        .all()
     )
+    if matching_names:
+        stock_query = stock_query.filter(models.SurgicalKit.standard_name.in_(matching_names))
+    else:
+        stock_query = stock_query.filter(
+            models.SurgicalKit.standard_name.ilike(f"%{normalized_search_query}%")
+        )
+    rows = stock_query.all()
 
     results: list[schemas.StockResult] = []
     for row in rows:
@@ -109,18 +124,45 @@ def search_by_kit_name(
             )
         )
 
+    match_rank = {name: index for index, name in enumerate(matching_names)}
     if user_latitude is not None and user_longitude is not None:
         results.sort(
             key=lambda result: (
+                match_rank.get(result.kit_name, len(match_rank)),
                 result.distance_km is None,
                 result.distance_km or 0,
                 result.pharmacy_name,
             )
         )
     else:
-        results.sort(key=lambda result: (-result.quantity, result.pharmacy_name))
+        results.sort(
+            key=lambda result: (
+                match_rank.get(result.kit_name, len(match_rank)),
+                -result.quantity,
+                result.pharmacy_name,
+            )
+        )
 
     db.add(models.SearchLog(query_text=raw_query, result_count=len(results)))
     db.commit()
 
     return results
+
+
+@router.get("/suggestions", response_model=List[str])
+def search_suggestions(
+    q: str = Query(min_length=1),
+    db: Session = Depends(get_db),
+):
+    """Suggest the closest searchable kit names that currently have stock."""
+    available_names = [
+        name
+        for (name,) in (
+            db.query(models.SurgicalKit.standard_name)
+            .join(models.Stock)
+            .filter(models.Stock.quantity > 0)
+            .distinct()
+            .all()
+        )
+    ]
+    return suggest_standard_names(q, available_names)
