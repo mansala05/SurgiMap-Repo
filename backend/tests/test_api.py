@@ -85,6 +85,27 @@ def test_health_sync_and_search():
         assert results[1]["status"] == "Low Stock"
         assert all(result["pharmacy_name"] != "MediQuick Pharmacy" for result in results)
 
+        second_kit_response = client.post(
+            "/sync/inventory",
+            json=[{
+                "pharmacy_id": 1,
+                "local_item_name": "Surgery Pack",
+                "standard_item_name": "General Surgery Kit",
+                "quantity": 4,
+                "status": "Available",
+                "last_updated": "2026-07-16T12:15:00",
+            }],
+            headers=SYNC_HEADERS,
+        )
+        assert second_kit_response.status_code == 200
+        exact_kit_response = client.get(
+            "/search",
+            params={"item_name": "Caesarean Surgical Kit"},
+        )
+        exact_kit_results = exact_kit_response.json()
+        assert len(exact_kit_results) == 2
+        assert len({result["pharmacy_id"] for result in exact_kit_results}) == 2
+
         nearby_response = client.get(
             "/search",
             params={
@@ -154,9 +175,12 @@ def test_health_sync_and_search():
 
 def test_master_catalog_matching():
     assert normalize_item_name("  C-SECTION   KIT ") == "Caesarean Surgical Kit"
-    assert find_matching_standard_names("appendix")[0] == "Appendectomy Surgical Kit"
-    assert find_matching_standard_names("DRK")[0] == "Dressing Kit"
-    assert "General Surgery Kit" in find_matching_standard_names("surgery")
+    assert find_matching_standard_names("Appendectomy Surgical Kit") == [
+        "Appendectomy Surgical Kit"
+    ]
+    assert find_matching_standard_names("appendix") == ["Appendectomy Surgical Kit"]
+    assert find_matching_standard_names("DRK") == ["Dressing Kit"]
+    assert find_matching_standard_names("surgery") == ["General Surgery Kit"]
 
 
 def teardown_module():

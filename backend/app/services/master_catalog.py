@@ -172,7 +172,32 @@ def rank_catalog_matches(
 
 
 def find_matching_standard_names(query: str) -> list[str]:
-    return rank_catalog_matches(query)
+    """Resolve a patient search to one canonical kit.
+
+    Suggestions may intentionally contain several kits, but stock results must
+    represent one requested kit. Returning every fuzzy match produced repeated
+    pharmacy cards whenever the same pharmacy stocked several similar kits.
+    """
+    normalized_query = normalize_search_text(query)
+    exact_name = NORMALIZED_ALIASES.get(
+        normalized_query,
+        NORMALIZED_CODES.get(normalized_query),
+    )
+    if exact_name is not None:
+        return [exact_name]
+
+    exact_standard_name = next(
+        (
+            standard_name
+            for standard_name in STANDARD_NAMES
+            if normalize_search_text(standard_name) == normalized_query
+        ),
+        None,
+    )
+    if exact_standard_name is not None:
+        return [exact_standard_name]
+
+    return rank_catalog_matches(query)[:1]
 
 
 def suggest_standard_names(
