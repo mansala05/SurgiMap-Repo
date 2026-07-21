@@ -75,6 +75,10 @@ npm run dev
 
 Frontend URL: `http://localhost:5173`
 
+The frontend connects to the backend at `http://127.0.0.1:8000` by default.
+For another backend URL, copy `frontend/.env.example` to `frontend/.env` and
+change `VITE_API_BASE_URL` before starting Vite.
+
 ## Tests
 
 ```bash
