@@ -3,9 +3,9 @@
     "pharmacy_id": 1,
     "local_item_name": "C Section Kit",
     "standard_item_name": "Caesarean Surgical Kit",
-    "quantity": 5,
-    "status": "Available",
-    "last_updated": "2026-06-27T17:18:23.325920"
+    "quantity": 2,
+    "status": "Low Stock",
+    "last_updated": "2026-07-21T10:59:33.443705"
   },
   {
     "pharmacy_id": 1,
@@ -13,7 +13,7 @@
     "standard_item_name": "Appendectomy Surgical Kit",
     "quantity": 2,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.920415"
+    "last_updated": "2026-07-21T10:59:25.704978"
   },
   {
     "pharmacy_id": 1,
@@ -21,7 +21,7 @@
     "standard_item_name": "General Surgery Kit",
     "quantity": 0,
     "status": "Not Available",
-    "last_updated": "2026-06-26T08:24:45.920419"
+    "last_updated": "2026-07-21T10:59:25.704979"
   },
   {
     "pharmacy_id": 1,
@@ -29,7 +29,7 @@
     "standard_item_name": "Suture Pack",
     "quantity": 10,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.920421"
+    "last_updated": "2026-07-21T10:59:25.704980"
   },
   {
     "pharmacy_id": 1,
@@ -37,7 +37,7 @@
     "standard_item_name": "Dressing Kit",
     "quantity": 3,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.920423"
+    "last_updated": "2026-07-21T10:59:25.704981"
   },
   {
     "pharmacy_id": 2,
@@ -45,7 +45,7 @@
     "standard_item_name": "Caesarean Surgical Kit",
     "quantity": 1,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.921272"
+    "last_updated": "2026-07-21T10:59:25.705527"
   },
   {
     "pharmacy_id": 2,
@@ -53,7 +53,7 @@
     "standard_item_name": "Appendectomy Surgical Kit",
     "quantity": 4,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.921286"
+    "last_updated": "2026-07-21T10:59:25.705530"
   },
   {
     "pharmacy_id": 2,
@@ -61,7 +61,7 @@
     "standard_item_name": "General Surgery Kit",
     "quantity": 6,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.921289"
+    "last_updated": "2026-07-21T10:59:25.705531"
   },
   {
     "pharmacy_id": 2,
@@ -69,7 +69,7 @@
     "standard_item_name": "Suture Pack",
     "quantity": 0,
     "status": "Not Available",
-    "last_updated": "2026-06-26T08:24:45.921291"
+    "last_updated": "2026-07-21T10:59:25.705532"
   },
   {
     "pharmacy_id": 2,
@@ -77,7 +77,7 @@
     "standard_item_name": "Dressing Kit",
     "quantity": 8,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.921292"
+    "last_updated": "2026-07-21T10:59:25.705533"
   },
   {
     "pharmacy_id": 3,
@@ -85,7 +85,7 @@
     "standard_item_name": "Caesarean Surgical Kit",
     "quantity": 0,
     "status": "Not Available",
-    "last_updated": "2026-06-26T08:24:45.922330"
+    "last_updated": "2026-07-21T10:59:25.706121"
   },
   {
     "pharmacy_id": 3,
@@ -93,7 +93,7 @@
     "standard_item_name": "Appendectomy Surgical Kit",
     "quantity": 3,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.922344"
+    "last_updated": "2026-07-21T10:59:25.706125"
   },
   {
     "pharmacy_id": 3,
@@ -101,7 +101,7 @@
     "standard_item_name": "General Surgery Kit",
     "quantity": 5,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.922346"
+    "last_updated": "2026-07-21T10:59:25.706126"
   },
   {
     "pharmacy_id": 3,
@@ -109,7 +109,7 @@
     "standard_item_name": "Suture Pack",
     "quantity": 2,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.922348"
+    "last_updated": "2026-07-21T10:59:25.706127"
   },
   {
     "pharmacy_id": 3,
@@ -117,7 +117,7 @@
     "standard_item_name": "Dressing Kit",
     "quantity": 7,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.922349"
+    "last_updated": "2026-07-21T10:59:25.706128"
   },
   {
     "pharmacy_id": 4,
@@ -125,7 +125,7 @@
     "standard_item_name": "Caesarean Surgical Kit",
     "quantity": 4,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.923160"
+    "last_updated": "2026-07-21T10:59:25.706593"
   },
   {
     "pharmacy_id": 4,
@@ -133,7 +133,7 @@
     "standard_item_name": "Appendectomy Surgical Kit",
     "quantity": 0,
     "status": "Not Available",
-    "last_updated": "2026-06-26T08:24:45.923174"
+    "last_updated": "2026-07-21T10:59:25.706595"
   },
   {
     "pharmacy_id": 4,
@@ -141,7 +141,7 @@
     "standard_item_name": "General Surgery Kit",
     "quantity": 1,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.923176"
+    "last_updated": "2026-07-21T10:59:25.706596"
   },
   {
     "pharmacy_id": 4,
@@ -149,7 +149,7 @@
     "standard_item_name": "Suture Pack",
     "quantity": 6,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.923178"
+    "last_updated": "2026-07-21T10:59:25.706597"
   },
   {
     "pharmacy_id": 4,
@@ -157,7 +157,7 @@
     "standard_item_name": "Dressing Kit",
     "quantity": 3,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.923179"
+    "last_updated": "2026-07-21T10:59:25.706598"
   },
   {
     "pharmacy_id": 5,
@@ -165,7 +165,7 @@
     "standard_item_name": "Caesarean Surgical Kit",
     "quantity": 7,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.923914"
+    "last_updated": "2026-07-21T10:59:25.707037"
   },
   {
     "pharmacy_id": 5,
@@ -173,7 +173,7 @@
     "standard_item_name": "Appendectomy Surgical Kit",
     "quantity": 2,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.923925"
+    "last_updated": "2026-07-21T10:59:25.707039"
   },
   {
     "pharmacy_id": 5,
@@ -181,7 +181,7 @@
     "standard_item_name": "General Surgery Kit",
     "quantity": 4,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.923927"
+    "last_updated": "2026-07-21T10:59:25.707040"
   },
   {
     "pharmacy_id": 5,
@@ -189,7 +189,7 @@
     "standard_item_name": "Suture Pack",
     "quantity": 0,
     "status": "Not Available",
-    "last_updated": "2026-06-26T08:24:45.923929"
+    "last_updated": "2026-07-21T10:59:25.707040"
   },
   {
     "pharmacy_id": 5,
@@ -197,7 +197,7 @@
     "standard_item_name": "Dressing Kit",
     "quantity": 9,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.923930"
+    "last_updated": "2026-07-21T10:59:25.707041"
   },
   {
     "pharmacy_id": 6,
@@ -205,7 +205,7 @@
     "standard_item_name": "Caesarean Surgical Kit",
     "quantity": 2,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.924794"
+    "last_updated": "2026-07-21T10:59:25.707573"
   },
   {
     "pharmacy_id": 6,
@@ -213,7 +213,7 @@
     "standard_item_name": "Appendectomy Surgical Kit",
     "quantity": 5,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.924805"
+    "last_updated": "2026-07-21T10:59:25.707574"
   },
   {
     "pharmacy_id": 6,
@@ -221,7 +221,7 @@
     "standard_item_name": "General Surgery Kit",
     "quantity": 0,
     "status": "Not Available",
-    "last_updated": "2026-06-26T08:24:45.924807"
+    "last_updated": "2026-07-21T10:59:25.707575"
   },
   {
     "pharmacy_id": 6,
@@ -229,7 +229,7 @@
     "standard_item_name": "Suture Pack",
     "quantity": 3,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.924809"
+    "last_updated": "2026-07-21T10:59:25.707576"
   },
   {
     "pharmacy_id": 6,
@@ -237,7 +237,7 @@
     "standard_item_name": "Dressing Kit",
     "quantity": 6,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.924810"
+    "last_updated": "2026-07-21T10:59:25.707577"
   },
   {
     "pharmacy_id": 7,
@@ -245,7 +245,7 @@
     "standard_item_name": "Caesarean Surgical Kit",
     "quantity": 0,
     "status": "Not Available",
-    "last_updated": "2026-06-26T08:24:45.926045"
+    "last_updated": "2026-07-21T10:59:25.707980"
   },
   {
     "pharmacy_id": 7,
@@ -253,7 +253,7 @@
     "standard_item_name": "Appendectomy Surgical Kit",
     "quantity": 8,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.926067"
+    "last_updated": "2026-07-21T10:59:25.707981"
   },
   {
     "pharmacy_id": 7,
@@ -261,7 +261,7 @@
     "standard_item_name": "General Surgery Kit",
     "quantity": 3,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.926071"
+    "last_updated": "2026-07-21T10:59:25.707982"
   },
   {
     "pharmacy_id": 7,
@@ -269,7 +269,7 @@
     "standard_item_name": "Suture Pack",
     "quantity": 5,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.926073"
+    "last_updated": "2026-07-21T10:59:25.707983"
   },
   {
     "pharmacy_id": 7,
@@ -277,7 +277,7 @@
     "standard_item_name": "Dressing Kit",
     "quantity": 1,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.926074"
+    "last_updated": "2026-07-21T10:59:25.707983"
   },
   {
     "pharmacy_id": 8,
@@ -285,7 +285,7 @@
     "standard_item_name": "Caesarean Surgical Kit",
     "quantity": 6,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.926994"
+    "last_updated": "2026-07-21T10:59:25.708447"
   },
   {
     "pharmacy_id": 8,
@@ -293,7 +293,7 @@
     "standard_item_name": "Appendectomy Surgical Kit",
     "quantity": 2,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.927007"
+    "last_updated": "2026-07-21T10:59:25.708448"
   },
   {
     "pharmacy_id": 8,
@@ -301,7 +301,7 @@
     "standard_item_name": "General Surgery Kit",
     "quantity": 7,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.927010"
+    "last_updated": "2026-07-21T10:59:25.708449"
   },
   {
     "pharmacy_id": 8,
@@ -309,7 +309,7 @@
     "standard_item_name": "Suture Pack",
     "quantity": 1,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.927011"
+    "last_updated": "2026-07-21T10:59:25.708449"
   },
   {
     "pharmacy_id": 8,
@@ -317,7 +317,7 @@
     "standard_item_name": "Dressing Kit",
     "quantity": 0,
     "status": "Not Available",
-    "last_updated": "2026-06-26T08:24:45.927013"
+    "last_updated": "2026-07-21T10:59:25.708450"
   },
   {
     "pharmacy_id": 9,
@@ -325,7 +325,7 @@
     "standard_item_name": "Caesarean Surgical Kit",
     "quantity": 3,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.928129"
+    "last_updated": "2026-07-21T10:59:25.709023"
   },
   {
     "pharmacy_id": 9,
@@ -333,7 +333,7 @@
     "standard_item_name": "Appendectomy Surgical Kit",
     "quantity": 0,
     "status": "Not Available",
-    "last_updated": "2026-06-26T08:24:45.928142"
+    "last_updated": "2026-07-21T10:59:25.709026"
   },
   {
     "pharmacy_id": 9,
@@ -341,7 +341,7 @@
     "standard_item_name": "General Surgery Kit",
     "quantity": 9,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.928145"
+    "last_updated": "2026-07-21T10:59:25.709028"
   },
   {
     "pharmacy_id": 9,
@@ -349,7 +349,7 @@
     "standard_item_name": "Suture Pack",
     "quantity": 2,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.928146"
+    "last_updated": "2026-07-21T10:59:25.709028"
   },
   {
     "pharmacy_id": 9,
@@ -357,7 +357,7 @@
     "standard_item_name": "Dressing Kit",
     "quantity": 4,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.928148"
+    "last_updated": "2026-07-21T10:59:25.709029"
   },
   {
     "pharmacy_id": 10,
@@ -365,7 +365,7 @@
     "standard_item_name": "Caesarean Surgical Kit",
     "quantity": 8,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.928966"
+    "last_updated": "2026-07-21T10:59:25.709595"
   },
   {
     "pharmacy_id": 10,
@@ -373,7 +373,7 @@
     "standard_item_name": "Appendectomy Surgical Kit",
     "quantity": 1,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.928991"
+    "last_updated": "2026-07-21T10:59:25.709597"
   },
   {
     "pharmacy_id": 10,
@@ -381,7 +381,7 @@
     "standard_item_name": "General Surgery Kit",
     "quantity": 5,
     "status": "Available",
-    "last_updated": "2026-06-26T08:24:45.928996"
+    "last_updated": "2026-07-21T10:59:25.709598"
   },
   {
     "pharmacy_id": 10,
@@ -389,7 +389,7 @@
     "standard_item_name": "Suture Pack",
     "quantity": 0,
     "status": "Not Available",
-    "last_updated": "2026-06-26T08:24:45.928998"
+    "last_updated": "2026-07-21T10:59:25.709599"
   },
   {
     "pharmacy_id": 10,
@@ -397,6 +397,6 @@
     "standard_item_name": "Dressing Kit",
     "quantity": 2,
     "status": "Low Stock",
-    "last_updated": "2026-06-26T08:24:45.928999"
+    "last_updated": "2026-07-21T10:59:25.709600"
   }
 ]
