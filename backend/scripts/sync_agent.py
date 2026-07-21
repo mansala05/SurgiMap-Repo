@@ -21,6 +21,7 @@ BACKEND_SYNC_URL = os.getenv(
     "SURGIMAP_SYNC_URL",
     "http://127.0.0.1:8000/sync/inventory",
 )
+SYNC_API_KEY = os.getenv("SURGIMAP_SYNC_API_KEY", "surgimap-local-demo-key")
 TOTAL_PHARMACIES = 10
 
 
@@ -65,7 +66,10 @@ def send_payload(payload: list[dict[str, object]]) -> None:
     request = urllib.request.Request(
         BACKEND_SYNC_URL,
         data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "X-Sync-Key": SYNC_API_KEY,
+        },
         method="POST",
     )
     try:

@@ -56,6 +56,8 @@ python -m scripts.sync_agent
 
 This reads all ten files in `backend/data/`, normalizes local kit names, and sends 50 records to `POST /sync/inventory`.
 
+The sync endpoint requires the `X-Sync-Key` header. The sync agent reads the same `SURGIMAP_SYNC_API_KEY` value from `backend/.env` automatically. Change the example key before any shared or deployed demo. The backend recalculates canonical kit names and stock statuses instead of trusting submitted values, rejects duplicate batch entries, and limits each request to 500 items. Direct public stock mutation routes are not exposed.
+
 Regenerate the local databases when needed:
 
 ```bash

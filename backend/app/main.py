@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.database import Base, SessionLocal, engine, get_db
-from app.routers import pharmacies, search, stock, sync
+from app.routers import pharmacies, search, sync
 from app.seed import seed_demo_pharmacies
 
 
@@ -41,7 +41,6 @@ app.add_middleware(
 
 app.include_router(pharmacies.router)
 app.include_router(search.router)
-app.include_router(stock.router)
 app.include_router(sync.router)
 
 

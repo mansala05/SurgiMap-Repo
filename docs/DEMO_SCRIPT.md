@@ -26,6 +26,8 @@ First, we have 10 dummy SQLite pharmacy databases. These represent independent p
 
 Second, we have the Python Local Sync Agent. It reads the pharmacy stock data, converts different local item names into standard surgical kit names, calculates the stock status, and sends the data to the backend.
 
+The sync channel is protected by a shared API key. The backend also recalculates the canonical kit name and availability status, rejects duplicate batch items, and does not expose a public stock-update endpoint.
+
 Third, we have the FastAPI backend. It receives the synced inventory data, records searches, filters out zero stock, and provides the search API.
 
 Fourth, we have the central database. PostgreSQL is used for the proposal-aligned setup, while SQLite remains available as a zero-setup fallback for the local demo.
@@ -39,6 +41,8 @@ Now we will show the working demo.
 First, we start the FastAPI backend.
 
 Then we run the Python Sync Agent. The sync agent reads all 10 pharmacy databases and sends 50 inventory records to the backend.
+
+The agent automatically includes the secure sync key configured in `backend/.env`; this key is never sent to the patient-facing browser.
 
 Now we open the React frontend.
 

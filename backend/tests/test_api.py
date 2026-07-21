@@ -3,6 +3,7 @@ from pathlib import Path
 
 TEST_DB = Path(__file__).with_name("test_surgimap.db")
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB}"
+os.environ["SURGIMAP_SYNC_API_KEY"] = "test-sync-key"
 
 from fastapi.testclient import TestClient
 
@@ -39,6 +40,7 @@ SAMPLE_PAYLOAD = [
         "last_updated": "2026-07-16T12:10:00",
     },
 ]
+SYNC_HEADERS = {"X-Sync-Key": "test-sync-key"}
 
 
 def test_health_sync_and_search():
@@ -48,7 +50,18 @@ def test_health_sync_and_search():
             "database": "connected",
         }
 
-        sync_response = client.post("/sync/inventory", json=SAMPLE_PAYLOAD)
+        assert client.post("/sync/inventory", json=SAMPLE_PAYLOAD).status_code == 401
+        assert client.post(
+            "/sync/inventory",
+            json=SAMPLE_PAYLOAD,
+            headers={"X-Sync-Key": "wrong-key"},
+        ).status_code == 401
+
+        sync_response = client.post(
+            "/sync/inventory",
+            json=SAMPLE_PAYLOAD,
+            headers=SYNC_HEADERS,
+        )
         assert sync_response.status_code == 200
         assert sync_response.json()["total"] == 3
 
@@ -102,6 +115,30 @@ def test_health_sync_and_search():
         )
         assert suggestion_response.status_code == 200
         assert suggestion_response.json()[0] == "Caesarean Surgical Kit"
+
+        duplicate_response = client.post(
+            "/sync/inventory",
+            json=[SAMPLE_PAYLOAD[0], SAMPLE_PAYLOAD[0]],
+            headers=SYNC_HEADERS,
+        )
+        assert duplicate_response.status_code == 400
+
+        assert client.post(
+            "/sync/inventory",
+            json=[],
+            headers=SYNC_HEADERS,
+        ).status_code == 422
+
+        assert client.post(
+            "/sync/inventory",
+            json=[SAMPLE_PAYLOAD[0]] * 501,
+            headers=SYNC_HEADERS,
+        ).status_code == 422
+
+        assert client.post(
+            "/stock/upsert",
+            json={"pharmacy_id": 1, "kit_id": 1, "quantity": 10},
+        ).status_code == 404
 
 
 def test_master_catalog_matching():
