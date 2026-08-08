@@ -2,6 +2,20 @@
 
 SurgiMap is a hackathon MVP for finding urgent surgical kits across connected pharmacies. Ten independent SQLite databases simulate pharmacy inventory systems, a Python sync agent normalizes and sends their stock to a central FastAPI service, and a React application shows nearby Available or Low Stock pharmacies.
 
+## Quick start
+
+After installing the backend and frontend dependencies once (see below), start
+the complete local project from the repository root with:
+
+```bash
+./start.sh
+```
+
+This starts the API and frontend together and uses the included SQLite database,
+so Docker is not required. Open `http://localhost:5173`. Press Ctrl+C to stop
+both servers. To use another database, supply `DATABASE_URL` when launching the
+script.
+
 ## Project structure
 
 ```text
