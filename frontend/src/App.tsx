@@ -1,14 +1,16 @@
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Home } from './pages/Home';
 import { HowItWorks } from './pages/HowItWorks';
 import { Search } from './pages/Search';
 import { Help } from './pages/Help';
 import { NoResults } from './pages/NoResults';
 import { About } from './pages/About';
+import { MapView } from './pages/MapView';
+import { Login } from './pages/auth/Login';
+import { PharmacyDashboard } from './pages/pharmacy/PharmacyDashboard';
+import { AdminPanel } from './pages/admin/AdminPanel';
+import { SyncLogs } from './pages/admin/SyncLogs';
 import { Stories } from './pages/Stories';
-
-const MapView = lazy(() => import('./pages/MapView').then((module) => ({ default: module.MapView })));
 export function App() {
   return (
     <BrowserRouter>
@@ -19,13 +21,12 @@ export function App() {
         <Route path="/help" element={<Help />} />
         <Route path="/no-results" element={<NoResults />} />
         <Route path="/about" element={<About />} />
-        <Route path="/map-view" element={
-          <Suspense fallback={<div className="min-h-screen bg-iceWhite flex items-center justify-center font-bold text-arcticNavy">Loading map…</div>}>
-            <MapView />
-          </Suspense>
-        } />
+        <Route path="/map-view" element={<MapView />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/pharmacy/dashboard" element={<PharmacyDashboard />} />
+        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/admin/sync-logs" element={<SyncLogs />} />
         <Route path="/stories" element={<Stories />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>);
 
