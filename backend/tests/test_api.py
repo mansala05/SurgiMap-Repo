@@ -4,6 +4,9 @@ from pathlib import Path
 TEST_DB = Path(__file__).with_name("test_surgimap.db")
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB}"
 os.environ["SURGIMAP_SYNC_API_KEY"] = "test-sync-key"
+os.environ["SURGIMAP_PHARMACY_EMAIL"] = "pharmacy@surgimap.lk"
+os.environ["SURGIMAP_PHARMACY_PASSWORD"] = "pharmacy123"
+os.environ["SURGIMAP_AUTH_SECRET"] = "test-auth-secret"
 
 from fastapi.testclient import TestClient
 
@@ -18,7 +21,7 @@ SAMPLE_PAYLOAD = [
     {
         "pharmacy_id": 1,
         "local_item_name": "C Section Kit",
-        "standard_item_name": "Caesarean Surgical Kit",
+        "standard_item_name": "Maternity & Cesarean Section (C-Section) Delivery Kit",
         "quantity": 5,
         "status": "Available",
         "last_updated": "2026-07-16T12:00:00",
@@ -26,7 +29,7 @@ SAMPLE_PAYLOAD = [
     {
         "pharmacy_id": 2,
         "local_item_name": "Cesarean Kit",
-        "standard_item_name": "Caesarean Surgical Kit",
+        "standard_item_name": "Maternity & Cesarean Section (C-Section) Delivery Kit",
         "quantity": 2,
         "status": "Available",
         "last_updated": "2026-07-16T12:05:00",
@@ -34,7 +37,7 @@ SAMPLE_PAYLOAD = [
     {
         "pharmacy_id": 3,
         "local_item_name": "Caesarean Surgery Kit",
-        "standard_item_name": "Caesarean Surgical Kit",
+        "standard_item_name": "Maternity & Cesarean Section (C-Section) Delivery Kit",
         "quantity": 0,
         "status": "Not Available",
         "last_updated": "2026-07-16T12:10:00",
@@ -89,8 +92,8 @@ def test_health_sync_and_search():
             "/sync/inventory",
             json=[{
                 "pharmacy_id": 1,
-                "local_item_name": "Surgery Pack",
-                "standard_item_name": "General Surgery Kit",
+                "local_item_name": "Trocar Set",
+                "standard_item_name": "Disposable Trocar Set 10mm & 5mm",
                 "quantity": 4,
                 "status": "Available",
                 "last_updated": "2026-07-16T12:15:00",
@@ -100,7 +103,7 @@ def test_health_sync_and_search():
         assert second_kit_response.status_code == 200
         exact_kit_response = client.get(
             "/search",
-            params={"item_name": "Caesarean Surgical Kit"},
+            params={"item_name": "Maternity & Cesarean Section (C-Section) Delivery Kit"},
         )
         exact_kit_results = exact_kit_response.json()
         assert len(exact_kit_results) == 2
@@ -146,7 +149,14 @@ def test_health_sync_and_search():
             params={"q": "cesarin"},
         )
         assert suggestion_response.status_code == 200
-        assert suggestion_response.json()[0] == "Caesarean Surgical Kit"
+        assert suggestion_response.json()[0] == (
+            "Maternity & Cesarean Section (C-Section) Delivery Kit"
+        )
+
+        catalog_response = client.get("/search/catalog")
+        assert catalog_response.status_code == 200
+        assert catalog_response.json()["total"] == 59
+        assert len(catalog_response.json()["primary_kits"]) == 6
 
         duplicate_response = client.post(
             "/sync/inventory",
@@ -163,7 +173,7 @@ def test_health_sync_and_search():
 
         assert client.post(
             "/sync/inventory",
-            json=[SAMPLE_PAYLOAD[0]] * 501,
+            json=[SAMPLE_PAYLOAD[0]] * 1001,
             headers=SYNC_HEADERS,
         ).status_code == 422
 
@@ -174,13 +184,59 @@ def test_health_sync_and_search():
 
 
 def test_master_catalog_matching():
-    assert normalize_item_name("  C-SECTION   KIT ") == "Caesarean Surgical Kit"
-    assert find_matching_standard_names("Appendectomy Surgical Kit") == [
-        "Appendectomy Surgical Kit"
+    assert normalize_item_name("  C-SECTION   KIT ") == (
+        "Maternity & Cesarean Section (C-Section) Delivery Kit"
+    )
+    assert find_matching_standard_names("appendectomy kit") == [
+        "Laparoscopic / Abdominal Surgery Kit"
     ]
-    assert find_matching_standard_names("appendix") == ["Appendectomy Surgical Kit"]
-    assert find_matching_standard_names("DRK") == ["Dressing Kit"]
-    assert find_matching_standard_names("surgery") == ["General Surgery Kit"]
+    assert find_matching_standard_names("appendix") == [
+        "Laparoscopic / Abdominal Surgery Kit"
+    ]
+    assert find_matching_standard_names("DRK") == [
+        "Wound Care & Post-Operative Dressing Kit"
+    ]
+    assert find_matching_standard_names("cataract kit") == [
+        "Cataract & Eye Surgery Kit"
+    ]
+    assert normalize_item_name("trocar 10mm") == "Disposable Trocar Set 10mm & 5mm"
+
+
+def test_pharmacy_login_and_session_validation():
+    with TestClient(app) as client:
+        assert client.get("/auth/pharmacy/me").status_code == 401
+        assert client.post(
+            "/auth/pharmacy/login",
+            json={"email": "pharmacy@surgimap.lk", "password": "wrong"},
+        ).status_code == 401
+
+        login_response = client.post(
+            "/auth/pharmacy/login",
+            json={"email": "PHARMACY@surgimap.lk", "password": "pharmacy123"},
+        )
+        assert login_response.status_code == 200
+        session = login_response.json()
+        assert session["pharmacy_id"] == 1
+        assert session["pharmacy_name"] == "City Med Pharmacy"
+        assert session["token_type"] == "bearer"
+
+        token = session["access_token"]
+        profile_response = client.get(
+            "/auth/pharmacy/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert profile_response.status_code == 200
+        assert profile_response.json() == {
+            "pharmacy_id": 1,
+            "pharmacy_name": "City Med Pharmacy",
+            "email": "pharmacy@surgimap.lk",
+        }
+
+        tampered_token = f"{token[:-1]}{'a' if token[-1] != 'a' else 'b'}"
+        assert client.get(
+            "/auth/pharmacy/me",
+            headers={"Authorization": f"Bearer {tampered_token}"},
+        ).status_code == 401
 
 
 def teardown_module():

@@ -30,7 +30,7 @@ def require_sync_key(
 def sync_inventory(
     items: Annotated[
         list[schemas.InventorySyncItem],
-        Body(min_length=1, max_length=500),
+        Body(min_length=1, max_length=1000),
     ],
     _: None = Depends(require_sync_key),
     db: Session = Depends(get_db),

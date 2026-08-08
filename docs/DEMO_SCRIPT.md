@@ -50,19 +50,19 @@ Let us search for “caesarean”.
 
 The browser asks for location permission. When we allow it, the backend calculates straight-line distance and returns the nearest matching pharmacies first. We can also refresh the current location or select a nearby area manually. If location is unavailable, the core search still works using stock-level ordering.
 
-The system shows only pharmacies where the Caesarean Surgical Kit is Available or Low Stock. Pharmacies where the item is Not Available are hidden from the user.
+The system shows only pharmacies where the Maternity & Cesarean Section Delivery Kit is Available or Low Stock. Pharmacies where the item is Not Available are hidden from the user.
 
 Each pharmacy card shows the availability badge, address, distance, last updated time, and contact buttons.
 
 The interface intentionally shows the simple Available or Low Stock status instead of exposing complex inventory quantities. If an update is older than one hour, SurgiMap warns the user to call before travelling.
 
-The user can call the pharmacy, contact through WhatsApp, view all results on the embedded Google Map, or open Google Maps driving directions before travelling. The result order uses straight-line distance for a fast and predictable search; Google Maps handles the actual road route.
+The user can call the pharmacy, contact through WhatsApp, view all results on the embedded OpenStreetMap, or open an OpenStreetMap route before travelling. The result order uses straight-line distance for a fast and predictable search; the map route service handles the actual road route.
 
 ## 5. Master Catalog Feature
 
 Different pharmacies may use different names for the same surgical kit. For example, one pharmacy may call it “C Section Kit”, while another may call it “Cesarean Kit”.
 
-Our master catalog maps these different local names into one standard name: “Caesarean Surgical Kit”.
+Our master catalog maps these different local names into one standard name: “Maternity & Cesarean Section (C-Section) Delivery Kit”. The catalog covers six main procedure-kit categories and 53 individual surgical items.
 
 This makes the search more reliable and user-friendly. The search also understands partial phrases such as “c section”, spelling variations, extra spaces, and short catalog codes such as “CSK”. If no stocked item matches, the interface offers the closest searchable kit names.
 

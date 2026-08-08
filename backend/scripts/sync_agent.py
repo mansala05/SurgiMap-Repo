@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 from pathlib import Path
@@ -82,10 +83,18 @@ def send_payload(payload: list[dict[str, object]]) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--prepare-only",
+        action="store_true",
+        help="Write sync_payload.json without sending it to the API",
+    )
+    args = parser.parse_args()
     payload = build_sync_payload()
     OUTPUT_FILE.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     print(f"Prepared {len(payload)} records and saved {OUTPUT_FILE.name}.")
-    send_payload(payload)
+    if not args.prepare_only:
+        send_payload(payload)
 
 
 if __name__ == "__main__":

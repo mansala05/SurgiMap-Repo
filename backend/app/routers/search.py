@@ -7,12 +7,24 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
 from app.services.master_catalog import (
+    PRIMARY_KITS,
+    STANDARD_NAMES,
     find_matching_standard_names,
     normalize_search_text,
     suggest_standard_names,
 )
 
 router = APIRouter(prefix="/search", tags=["Search"])
+
+
+@router.get("/catalog", response_model=schemas.CatalogResponse)
+def catalog():
+    """Return the searchable master catalog used by the UI."""
+    return {
+        "primary_kits": list(PRIMARY_KITS),
+        "items": list(STANDARD_NAMES),
+        "total": len(STANDARD_NAMES),
+    }
 
 
 def compute_status(quantity: int) -> str:

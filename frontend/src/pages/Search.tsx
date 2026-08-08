@@ -1,54 +1,81 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SearchIcon, XIcon, MenuIcon } from 'lucide-react';
+import { getCatalog } from '../lib/api';
 
 const NAV_LINKS = ['About', 'How it works', 'Help'];
 const FOOTER_LINKS = {
   Company: ['About', 'Features', 'How it works', 'Search'],
   Support: ['Help center', 'Contact', 'Privacy and Terms']
 };
-const QUICK_KITS = [
+const KIT_PRESENTATION = [
   {
     id: 1,
-    name: 'Caesarean Surgical Kit',
+    name: 'Maternity & Cesarean Section (C-Section) Delivery Kit',
     category: 'Obstetrics',
     image:
       'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=800'
   },
   {
     id: 2,
-    name: 'Appendectomy Surgical Kit',
-    category: 'General Surgery',
+    name: 'Laparoscopic / Abdominal Surgery Kit',
+    category: 'Laparoscopy',
     image:
       'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&q=80&w=800'
   },
   {
     id: 3,
-    name: 'General Surgery Kit',
-    category: 'General Surgery',
+    name: 'Orthopedic & Major Joint Surgery Prep Kit',
+    category: 'Orthopedics',
     image:
       'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=800'
   },
   {
     id: 4,
-    name: 'Suture Pack',
-    category: 'Wound Closure',
+    name: 'Minor Surgical & Suture Removal Kit',
+    category: 'Minor Surgery',
     image:
       'https://images.unsplash.com/photo-1587854692152-cbe660dbbb88?auto=format&fit=crop&q=80&w=800'
   },
   {
     id: 5,
-    name: 'Dressing Kit',
-    category: 'Wound Care',
+    name: 'Cataract & Eye Surgery Kit',
+    category: 'Ophthalmology',
     image:
       'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 6,
+    name: 'Wound Care & Post-Operative Dressing Kit',
+    category: 'Wound Care',
+    image:
+      'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=800'
   }];
 
 export function Search() {
   const location = useLocation();
   const [query, setQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [quickKits, setQuickKits] = useState(KIT_PRESENTATION);
+  const [catalogTotal, setCatalogTotal] = useState(59);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getCatalog(controller.signal)
+      .then((catalog) => {
+        setCatalogTotal(catalog.total);
+        setQuickKits(catalog.primary_kits.map((name, index) => ({
+          ...(KIT_PRESENTATION[index] || KIT_PRESENTATION[0]),
+          id: index + 1,
+          name
+        })));
+      })
+      .catch(() => {
+        // The built-in primary kit cards remain available while the API starts.
+      });
+    return () => controller.abort();
+  }, []);
   function handleSearch(value: string) {
     const term = value.trim();
     if (!term) return;
@@ -131,7 +158,7 @@ export function Search() {
                 <input
                   className="flex-1 bg-transparent border-none outline-none py-4 text-lg font-medium text-obsidian placeholder:text-silverMist"
                   type="text"
-                  placeholder="e.g. C Section Kit, Appendix Kit, Dressing Kit..."
+                  placeholder="e.g. maternity kit, trocar, eye shield, dressing kit..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -164,12 +191,12 @@ export function Search() {
                 Commonly Searched Kits
               </h2>
               <span className="text-xs font-bold uppercase tracking-widest text-silverMist">
-                Scroll to explore
+                {catalogTotal} searchable catalog items
               </span>
             </div>
 
             <div className="flex gap-6 overflow-x-auto pb-8 snap-x no-scrollbar">
-              {QUICK_KITS.map((kit) =>
+              {quickKits.map((kit) =>
                 <button
                   key={kit.id}
                   className="flex-shrink-0 snap-start w-80 min-h-[400px] bg-white border border-silverMist rounded-[2.5rem] text-left group hover:border-arcticNavy hover:shadow-2xl hover:shadow-arcticNavy/5 transition-all flex flex-col relative overflow-hidden"
