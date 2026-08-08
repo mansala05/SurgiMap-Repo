@@ -11,9 +11,20 @@ import {
   MailIcon,
   PhoneIcon,
   PhoneCallIcon,
-  MessageCircleIcon
+  MessageCircleIcon,
+  NavigationIcon
 } from
   'lucide-react';
+import { searchStock, suggestKits, type StockResult } from '../lib/api';
+import {
+  AREA_LOCATIONS,
+  requestCurrentLocation,
+  resolveUserLocation,
+  setManualLocation,
+  type LocationStatus,
+  type UserLocation
+} from '../lib/location';
+import { formatStockAge, isStockStale } from '../lib/stock';
   
 
 const NAV_LINKS = ['About', 'How it works', 'Help'];
@@ -60,38 +71,8 @@ const FOOTER_LINKS = {
   Support: ['Help center', 'Contact', 'Privacy and Terms']
 };
 
-type SearchResult = {
-  pharmacy_id: number;
-  pharmacy_name: string;
-  address: string;
-  phone: string | null;
-  whatsapp: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  distance_km: number | null;
-  kit_name: string;
-  quantity: number;
-  status: string;
-  last_updated: string;
-};
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000')
-  .replace(/\/$/, '');
-const KIT_IMAGE =
+const RESULT_IMAGE =
   'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=400';
-
-function statusColor(status: string) {
-  if (status === 'Available') return 'text-green-600';
-  if (status === 'Low Stock') return 'text-yellow-600';
-  return 'text-red-600';
-}
-
-function mapUrl(result: SearchResult) {
-  const destination = result.latitude !== null && result.longitude !== null
-    ? `${result.latitude},${result.longitude}`
-    : `${result.pharmacy_name}, ${result.address}`;
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination)}`;
-}
 
 const SEARCH_CHIPS = [
   'caesarean',
@@ -119,9 +100,13 @@ export function Home() {
 
   const query = searchParams.get('q') || '';
   const [searchInput, setSearchInput] = useState(query);
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<StockResult[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>('requesting');
+  const [locationRefresh, setLocationRefresh] = useState(0);
 
   useEffect(() => {
     setSearchInput(query);
@@ -130,6 +115,7 @@ export function Home() {
   useEffect(() => {
     if (!query) {
       setResults([]);
+      setSuggestions([]);
       setSearchError('');
       setIsSearching(false);
       return;
@@ -138,34 +124,48 @@ export function Home() {
     const controller = new AbortController();
     setIsSearching(true);
     setSearchError('');
+    setSuggestions([]);
 
-    fetch(`${API_BASE_URL}/search?item_name=${encodeURIComponent(query)}`, {
-      signal: controller.signal
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          const body = await response.json().catch(() => null);
-          throw new Error(body?.detail || `Search failed (${response.status})`);
-        }
-        return response.json() as Promise<SearchResult[]>;
+    resolveUserLocation()
+      .then((locationResult) => {
+        setUserLocation(locationResult.location);
+        setLocationStatus(locationResult.status);
+        return searchStock(query, { signal: controller.signal, location: locationResult.location });
       })
-      .then(setResults)
-      .catch((error: Error) => {
-        if (error.name !== 'AbortError') {
-          setResults([]);
-          setSearchError(
-            error.message === 'Failed to fetch'
-              ? 'Cannot reach the SurgiMap API. Start the project with ./start.sh and try again.'
-              : error.message
-          );
+      .then(async (searchResults) => {
+        setResults(searchResults);
+        if (searchResults.length === 0) {
+          setSuggestions(await suggestKits(query, controller.signal));
         }
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        setResults([]);
+        setSearchError(error instanceof Error ? error.message : 'Could not connect to the API');
       })
       .finally(() => {
         if (!controller.signal.aborted) setIsSearching(false);
       });
 
     return () => controller.abort();
-  }, [query]);
+  }, [locationRefresh, query]);
+
+  const handleUseCurrentLocation = async () => {
+    setLocationStatus('requesting');
+    const locationResult = await requestCurrentLocation(true);
+    setUserLocation(locationResult.location);
+    setLocationStatus(locationResult.status);
+    if (locationResult.location) setLocationRefresh((value) => value + 1);
+  };
+
+  const handleAreaChange = (areaLabel: string) => {
+    const area = AREA_LOCATIONS.find((option) => option.label === areaLabel);
+    if (!area) return;
+    setManualLocation(area);
+    setUserLocation(area);
+    setLocationStatus('ready');
+    setLocationRefresh((value) => value + 1);
+  };
 
   const handleSearch = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -230,43 +230,113 @@ export function Home() {
           )}
         </div>
 
-        <div className="w-full max-w-4xl flex items-center justify-between mb-8">
-          <p className="text-steelBlue font-bold">
-            {isSearching ? 'Searching live inventory…' : `${results.length} pharmacies found`}
-          </p>
-          <button
-            onClick={() => navigate(`/map-view?q=${encodeURIComponent(query)}`)}
-            disabled={isSearching || results.length === 0}
-            className="flex items-center gap-2 bg-white border border-silverMist text-arcticNavy px-6 py-2.5 rounded-xl font-bold text-sm uppercase tracking-widest hover:border-arcticNavy transition-all shadow-sm">
-
-            <MapPinIcon className="w-4 h-4" />
-            View on Map
-          </button>
+        <div className="w-full max-w-4xl mb-6 bg-white border border-silverMist rounded-2xl px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${locationStatus === 'ready' ? 'bg-green-50 text-green-600' : locationStatus === 'requesting' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-700'}`}>
+              <MapPinIcon className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-black text-obsidian">
+                {locationStatus === 'ready' && userLocation
+                  ? userLocation.label
+                  : locationStatus === 'requesting'
+                    ? 'Detecting your location…'
+                    : locationStatus === 'denied'
+                      ? 'Location permission denied'
+                      : locationStatus === 'timeout'
+                        ? 'Location request timed out'
+                        : 'Location unavailable'}
+              </p>
+              <p className="text-xs text-steelBlue mt-0.5">
+                {locationStatus === 'ready' ? 'Results are sorted nearest first' : 'Choose an area or try current location again'}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              type="button"
+              disabled={locationStatus === 'requesting'}
+              onClick={handleUseCurrentLocation}
+              className="px-4 py-2.5 rounded-xl border border-arcticNavy/20 text-arcticNavy text-xs font-black uppercase tracking-wider hover:bg-arcticNavy hover:text-white disabled:opacity-50 transition-colors">
+              {locationStatus === 'requesting' ? 'Locating…' : userLocation?.source === 'current' ? 'Refresh location' : 'Use current location'}
+            </button>
+            <select
+              value={userLocation?.source === 'manual' ? userLocation.label : ''}
+              onChange={(event) => handleAreaChange(event.target.value)}
+              className="px-4 py-2.5 rounded-xl border border-silverMist bg-white text-xs font-bold text-steelBlue focus:outline-none focus:border-arcticNavy">
+              <option value="" disabled>Select area</option>
+              {AREA_LOCATIONS.map((area) => <option key={area.label} value={area.label}>{area.label}</option>)}
+            </select>
+          </div>
         </div>
+
+        <div className="w-full max-w-4xl flex items-center justify-between mb-8">
+          <div>
+            <p className="text-steelBlue font-bold">
+              {isSearching ? 'Searching pharmacies…' : `${results.length} pharmacies found`}
+            </p>
+            {!isSearching && results.length > 0 &&
+              <p className="text-xs text-steelBlue/70 mt-1">
+                {locationStatus === 'ready' && results.every((result) => result.distance_km !== null)
+                  ? `Nearest pharmacies shown first from ${userLocation?.label}`
+                  : 'Distance sorting is off'}
+              </p>
+            }
+          </div>
+          {results.length > 0 &&
+            <button
+              onClick={() => navigate(
+                `/map-view?q=${encodeURIComponent(query)}`,
+                { state: { results, userLocation } }
+              )}
+              className="flex items-center gap-2 bg-white border border-silverMist text-arcticNavy px-6 py-2.5 rounded-xl font-bold text-sm uppercase tracking-widest hover:border-arcticNavy transition-all shadow-sm">
+
+              <MapPinIcon className="w-4 h-4" />
+              View on Map
+            </button>
+          }
+        </div>
+
+        {searchError &&
+          <div className="w-full max-w-4xl mb-8 rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-red-700">
+            <p className="font-bold">Could not load pharmacy stock.</p>
+            <p className="mt-1 text-sm">{searchError}. Make sure the backend is running on port 8000.</p>
+          </div>
+        }
+
+        {!isSearching && !searchError && results.length === 0 &&
+          <div className="w-full max-w-4xl mb-8 rounded-2xl border border-silverMist bg-white p-10 text-center">
+            <p className="text-xl font-black text-arcticNavy">No in-stock pharmacies found</p>
+            <p className="mt-2 text-steelBlue">
+              {suggestions.length > 0 ? 'Did you mean one of these kits?' : 'Try another kit name or a common abbreviation.'}
+            </p>
+            {suggestions.length > 0 &&
+              <div className="mt-5 flex flex-wrap justify-center gap-2">
+                {suggestions.map((suggestion) =>
+                  <button
+                    key={suggestion}
+                    onClick={() => navigate(`/?q=${encodeURIComponent(suggestion)}`)}
+                    className="rounded-full border border-arcticNavy/30 bg-arcticNavy/5 px-4 py-2 text-sm font-bold text-arcticNavy hover:bg-arcticNavy hover:text-white transition-colors">
+                    {suggestion}
+                  </button>
+                )}
+              </div>
+            }
+          </div>
+        }
 
         {/* Pharmacy Cards */}
         <div className="w-full max-w-4xl space-y-8">
-          {searchError &&
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-2xl p-6 text-center font-bold">
-              {searchError}
-            </div>
-          }
-          {!isSearching && !searchError && results.length === 0 &&
-            <div className="bg-white border border-silverMist rounded-2xl p-10 text-center">
-              <h2 className="text-2xl font-black text-arcticNavy mb-2">No stocked pharmacies found</h2>
-              <p className="text-steelBlue">Try caesarean, appendix, suture, dressing, or general surgery.</p>
-            </div>
-          }
           {results.map((pharmacy) =>
             <div
-              key={`${pharmacy.pharmacy_id}-${pharmacy.kit_name}`}
+              key={pharmacy.pharmacy_id}
               className="bg-white border border-silverMist rounded-[2rem] overflow-hidden shadow-xl shadow-arcticNavy/5 hover:shadow-2xl hover:shadow-arcticNavy/10 transition-all duration-300 group">
 
               <div className="flex flex-col md:flex-row">
                 {/* Kit Image */}
                 <div className="md:w-2/5 h-64 md:h-auto relative overflow-hidden">
                   <img
-                    src={KIT_IMAGE}
+                    src={RESULT_IMAGE}
                     alt={pharmacy.kit_name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
 
@@ -280,9 +350,9 @@ export function Home() {
                       {pharmacy.pharmacy_name}
                     </h3>
                     <span
-                      className={`font-black text-sm uppercase tracking-widest px-4 py-2 rounded-full bg-white border border-silverMist shadow-sm ${statusColor(pharmacy.status)}`}>
+                      className={`font-black text-sm uppercase tracking-widest px-4 py-2 rounded-full bg-white border border-silverMist shadow-sm ${pharmacy.status === 'Available' ? 'text-green-600' : 'text-yellow-600'}`}>
 
-                      {pharmacy.status} · {pharmacy.quantity}
+                      {pharmacy.status}
                     </span>
                   </div>
 
@@ -303,15 +373,20 @@ export function Home() {
                           Location
                         </span>{' '}
                         {pharmacy.address}
-                        {pharmacy.distance_km !== null ? ` • ${pharmacy.distance_km} km` : ''}
+                        {pharmacy.distance_km !== null ? ` · ${pharmacy.distance_km.toFixed(1)} km away` : ''}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
                       <ZapIcon className="w-5 h-5 text-arcticNavy opacity-50" />
                       <p className="text-xs font-bold text-steelBlue uppercase tracking-widest">
-                        Updated {new Date(pharmacy.last_updated).toLocaleString()}
+                        Updated {formatStockAge(pharmacy.last_updated)}
                       </p>
                     </div>
+                    {isStockStale(pharmacy.last_updated) &&
+                      <p className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                        This update is over an hour old. Please call before travelling.
+                      </p>
+                    }
                   </div>
 
                   <div className="flex flex-wrap gap-6 pt-6 border-t border-silverMist/30">
@@ -332,13 +407,15 @@ export function Home() {
                       WhatsApp
                     </a>}
                     <a
-                      href={mapUrl(pharmacy)}
+                      href={pharmacy.latitude !== null && pharmacy.longitude !== null
+                        ? `https://www.google.com/maps/dir/?api=1${userLocation ? `&origin=${userLocation.latitude},${userLocation.longitude}` : ''}&destination=${pharmacy.latitude},${pharmacy.longitude}&travelmode=driving`
+                        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${pharmacy.pharmacy_name} ${pharmacy.address}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-steelBlue hover:text-arcticNavy font-bold text-sm uppercase tracking-widest transition-colors">
 
-                      <MapPinIcon className="w-5 h-5" />
-                      Map
+                      <NavigationIcon className="w-5 h-5" />
+                      Directions
                     </a>
                   </div>
                 </div>
@@ -386,11 +463,6 @@ export function Home() {
               href="/#contact"
               className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all border ${location.hash === '#contact' && location.pathname === '/' ? 'border-arcticNavy text-arcticNavy bg-arcticNavy/10' : 'border-silverMist text-steelBlue hover:border-arcticNavy hover:text-arcticNavy'}`}>
               Contact
-            </a>
-            <a
-              href="/login"
-              className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all border ${location.pathname === '/login' ? 'border-arcticNavy text-arcticNavy bg-arcticNavy/10' : 'border-silverMist text-steelBlue hover:border-arcticNavy hover:text-arcticNavy'}`}>
-              Login
             </a>
             <a
               href="/search"
@@ -739,11 +811,6 @@ export function Home() {
             href="/search"
             className="border border-arcticNavy rounded-full px-8 py-3 text-sm font-bold uppercase tracking-widest text-arcticNavy hover:bg-arcticNavy hover:text-iceWhite transition-all">
             Search
-          </a>
-
-          <a href="/login"
-            className="border border-arcticNavy rounded-full px-8 py-3 text-sm font-bold uppercase tracking-widest text-arcticNavy hover:bg-arcticNavy hover:text-iceWhite transition-all">
-            Login
           </a>
 
           <a href="#contact"
