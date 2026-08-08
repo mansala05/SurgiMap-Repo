@@ -17,8 +17,26 @@ export type StockResult = {
   last_updated: string;
 };
 
+export type CatalogResponse = {
+  primary_kits: string[];
+  items: string[];
+  total: number;
+};
+
 type ApiErrorBody = {
   detail?: string;
+};
+
+export type PharmacyProfile = {
+  pharmacy_id: number;
+  pharmacy_name: string;
+  email: string;
+};
+
+export type PharmacySession = PharmacyProfile & {
+  access_token: string;
+  token_type: 'bearer';
+  expires_in: number;
 };
 
 type SearchStockOptions = {
@@ -53,4 +71,36 @@ export async function suggestKits(query: string, signal?: AbortSignal): Promise<
   const response = await fetch(url, { signal });
   if (!response.ok) return [];
   return response.json() as Promise<string[]>;
+}
+
+export async function getCatalog(signal?: AbortSignal): Promise<CatalogResponse> {
+  const url = new URL('/search/catalog', API_BASE_URL);
+  const response = await fetch(url, { signal });
+  if (!response.ok) throw new Error(`Could not load catalog (${response.status})`);
+  return response.json() as Promise<CatalogResponse>;
+}
+
+export async function loginPharmacy(email: string, password: string): Promise<PharmacySession> {
+  const response = await fetch(new URL('/auth/pharmacy/login', API_BASE_URL), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({} as ApiErrorBody));
+    throw new Error(body.detail || `Sign in failed (${response.status})`);
+  }
+  return response.json() as Promise<PharmacySession>;
+}
+
+export async function getPharmacyProfile(
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<PharmacyProfile> {
+  const response = await fetch(new URL('/auth/pharmacy/me', API_BASE_URL), {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    signal,
+  });
+  if (!response.ok) throw new Error('Your pharmacy session has expired. Please sign in again.');
+  return response.json() as Promise<PharmacyProfile>;
 }

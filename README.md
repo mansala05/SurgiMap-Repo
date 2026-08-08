@@ -22,7 +22,7 @@ script.
 SurgiMap_Cleaned/
 ├── backend/
 │   ├── app/                 # Single canonical FastAPI application
-│   │   ├── routers/         # Search, sync, stock, pharmacy endpoints
+│   │   ├── routers/         # Auth, search, sync, and pharmacy endpoints
 │   │   └── services/        # Item-name normalization catalog
 │   ├── data/                # 10 simulated pharmacy SQLite databases
 │   ├── scripts/             # Demo database, sync, and stock-update tools
@@ -68,11 +68,11 @@ source .venv/bin/activate
 python -m scripts.sync_agent
 ```
 
-This reads all ten files in `backend/data/`, normalizes local kit names, and sends 50 records to `POST /sync/inventory`.
+This reads all ten files in `backend/data/`, normalizes local item names, and sends 590 records to `POST /sync/inventory`. The expanded master catalog contains 59 canonical kits and surgical items with 396 patient/pharmacy aliases.
 
-The sync endpoint requires the `X-Sync-Key` header. The sync agent reads the same `SURGIMAP_SYNC_API_KEY` value from `backend/.env` automatically. Change the example key before any shared or deployed demo. The backend recalculates canonical kit names and stock statuses instead of trusting submitted values, rejects duplicate batch entries, and limits each request to 500 items. Direct public stock mutation routes are not exposed.
+The sync endpoint requires the `X-Sync-Key` header. The sync agent reads the same `SURGIMAP_SYNC_API_KEY` value from `backend/.env` automatically. Change the example key before any shared or deployed demo. The backend recalculates canonical item names and stock statuses instead of trusting submitted values, rejects duplicate batch entries, and limits each request to 1,000 items. Direct public stock mutation routes are not exposed.
 
-Regenerate the local databases when needed:
+Rebuild all ten local pharmacy databases and the central SQLite demo database when needed:
 
 ```bash
 python -m scripts.create_demo_databases
@@ -115,22 +115,26 @@ Frontend URL: `http://localhost:5173`
 The frontend connects to the backend at `http://127.0.0.1:8000` by default. For
 another backend URL, change `VITE_API_BASE_URL` before starting Vite.
 
-The results map uses the Google Maps JavaScript API. Enable that API in a Google
-Cloud project, place a browser-restricted key in `VITE_GOOGLE_MAPS_API_KEY`, and
-set `VITE_GOOGLE_MAP_ID` when using your own map ID. `DEMO_MAP_ID` is suitable for
-local development. Restrict the browser key to the frontend's HTTP referrers
-before sharing or deploying the demo. If no key is configured, the page shows a
-safe setup message and still offers an external Google Maps link.
+The results page uses OpenStreetMap tiles through Leaflet, so no browser API key
+is required. Pharmacy markers, the selected user location, and route links are
+rendered directly from the live backend search response. Keep the visible
+OpenStreetMap attribution when changing the map layout or tile provider.
 
 The browser asks for location permission on the first search. Users can retry
 current-location detection or select Colombo, Nugegoda, Dehiwala, Maharagama, or
 Battaramulla manually. When a location is available, the backend calculates the
-straight-line distance and returns pharmacies nearest-first. Google Maps provides
-the interactive marker map and driving directions; the displayed sorting distance
+straight-line distance and returns pharmacies nearest-first. OpenStreetMap provides
+the interactive marker map and OSRM-powered route links; the displayed sorting distance
 is not road-travel distance. Without a location, search, map, Call, WhatsApp, and
 Directions still work without distance sorting.
 
-Authentication and pharmacy/admin dashboards are future scope in this MVP. Mock operational portals are not included, so the demo does not present unfinished login or authorization behavior to users.
+The pharmacy portal is available at `http://localhost:5173/login`. For the local
+demo, use `pharmacy@surgimap.lk` / `pharmacy123`, or choose **Fill demo
+credentials** on the sign-in screen. The API validates the credentials and issues
+an eight-hour signed pharmacy session; `/pharmacy/dashboard` redirects unsigned or
+expired sessions back to login. Set `SURGIMAP_PHARMACY_EMAIL`,
+`SURGIMAP_PHARMACY_PASSWORD`, and `SURGIMAP_AUTH_SECRET` in `backend/.env` before
+using the portal outside local development.
 
 ## Tests
 

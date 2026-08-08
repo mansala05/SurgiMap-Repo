@@ -34,6 +34,29 @@ class StockResult(BaseModel):
     last_updated: datetime
 
 
+class CatalogResponse(BaseModel):
+    primary_kits: list[str]
+    items: list[str]
+    total: int
+
+
+class PharmacyLoginRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=254)
+    password: str = Field(min_length=1, max_length=128)
+
+
+class PharmacyProfileResponse(BaseModel):
+    pharmacy_id: int
+    pharmacy_name: str
+    email: str
+
+
+class PharmacySessionResponse(PharmacyProfileResponse):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+
+
 class InventorySyncItem(BaseModel):
     pharmacy_id: int = Field(gt=0)
     local_item_name: str = Field(min_length=1)

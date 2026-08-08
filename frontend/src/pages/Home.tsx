@@ -75,11 +75,12 @@ const RESULT_IMAGE =
   'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=400';
 
 const SEARCH_CHIPS = [
-  'caesarean',
-  'appendix',
-  'suture',
-  'dressing',
-  'general surgery'];
+  'maternity kit',
+  'laparoscopy kit',
+  'orthopedic kit',
+  'minor surgery kit',
+  'cataract kit',
+  'dressing kit'];
 
 export function Home() {
   const location = useLocation();
@@ -408,8 +409,10 @@ export function Home() {
                     </a>}
                     <a
                       href={pharmacy.latitude !== null && pharmacy.longitude !== null
-                        ? `https://www.google.com/maps/dir/?api=1${userLocation ? `&origin=${userLocation.latitude},${userLocation.longitude}` : ''}&destination=${pharmacy.latitude},${pharmacy.longitude}&travelmode=driving`
-                        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${pharmacy.pharmacy_name} ${pharmacy.address}`)}`}
+                        ? userLocation
+                          ? `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${userLocation.latitude}%2C${userLocation.longitude}%3B${pharmacy.latitude}%2C${pharmacy.longitude}`
+                          : `https://www.openstreetmap.org/?mlat=${pharmacy.latitude}&mlon=${pharmacy.longitude}#map=16/${pharmacy.latitude}/${pharmacy.longitude}`
+                        : `https://www.openstreetmap.org/search?query=${encodeURIComponent(`${pharmacy.pharmacy_name} ${pharmacy.address}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-steelBlue hover:text-arcticNavy font-bold text-sm uppercase tracking-widest transition-colors">
