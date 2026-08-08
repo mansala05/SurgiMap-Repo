@@ -100,10 +100,7 @@ export function Search() {
     const term = value.trim();
     if (!term) return;
     setIsLoading(true);
-    // Simulate searching delay
-    setTimeout(() => {
-      navigate(`/?q=${encodeURIComponent(term)}`);
-    }, 2500);
+    navigate(`/?q=${encodeURIComponent(term)}`);
   }
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') handleSearch(query);

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeftIcon,
@@ -14,67 +14,42 @@ import {
   'lucide-react';
 
 const NAV_LINKS = ['About', 'How it works', 'Help'];
-const PHARMACIES = [
-  {
-    id: 1,
-    name: 'Lanka Care Pharmacy',
-    status: 'Available',
-    distance: '0.8 km',
-    lastUpdated: '10 min ago',
-    phone: '+94 70 111 2222',
-    x: 18,
-    y: 28
-  },
-  {
-    id: 2,
-    name: 'Colombo Med Hub',
-    status: 'Low Stock',
-    distance: '1.2 km',
-    lastUpdated: '25 min ago',
-    phone: '+94 70 222 3333',
-    x: 40,
-    y: 16
-  },
-  {
-    id: 3,
-    name: 'Healthline Pharmacy',
-    status: 'Available',
-    distance: '1.5 km',
-    lastUpdated: '5 min ago',
-    phone: '+94 70 333 4444',
-    x: 58,
-    y: 42
-  },
-  {
-    id: 4,
-    name: 'City Surgical Supplies',
-    status: 'Available',
-    distance: '2.1 km',
-    lastUpdated: '1 hr ago',
-    phone: '+94 70 444 5555',
-    x: 76,
-    y: 26
-  },
-  {
-    id: 5,
-    name: 'Wellcare Pharmacy',
-    status: 'Low Stock',
-    distance: '2.4 km',
-    lastUpdated: '40 min ago',
-    phone: '+94 70 555 6666',
-    x: 30,
-    y: 68
-  },
-  {
-    id: 6,
-    name: 'Metro Pharmacy',
-    status: 'Available',
-    distance: '3.0 km',
-    lastUpdated: '15 min ago',
-    phone: '+94 70 666 7777',
-    x: 65,
-    y: 75
-  }];
+type SearchResult = {
+  pharmacy_id: number;
+  pharmacy_name: string;
+  address: string;
+  phone: string | null;
+  whatsapp: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  distance_km: number | null;
+  kit_name: string;
+  quantity: number;
+  status: string;
+  last_updated: string;
+};
+
+type MapPharmacy = SearchResult & { x: number; y: number };
+
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000')
+  .replace(/\/$/, '');
+
+function toMapPharmacy(result: SearchResult): MapPharmacy {
+  const x = result.longitude === null
+    ? 50
+    : Math.min(90, Math.max(10, 10 + ((result.longitude - 79.83) / 0.12) * 80));
+  const y = result.latitude === null
+    ? 50
+    : Math.min(90, Math.max(10, 90 - ((result.latitude - 6.83) / 0.1) * 80));
+  return { ...result, x, y };
+}
+
+function directionsUrl(pharmacy: MapPharmacy) {
+  const destination = pharmacy.latitude !== null && pharmacy.longitude !== null
+    ? `${pharmacy.latitude},${pharmacy.longitude}`
+    : `${pharmacy.pharmacy_name}, ${pharmacy.address}`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+}
 
 const getStatusColors = (status: string) => {
   switch (status) {
@@ -104,11 +79,34 @@ const getStatusColors = (status: string) => {
 export function MapView() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const query = searchParams.get('q') || '';
   const [activeId, setActiveId] = useState<number | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const active = PHARMACIES.find((p) => p.id === activeId);
+  const [pharmacies, setPharmacies] = useState<MapPharmacy[]>([]);
+  const [error, setError] = useState('');
+  const active = pharmacies.find((p) => p.pharmacy_id === activeId);
+
+  useEffect(() => {
+    if (!query) return;
+    const controller = new AbortController();
+    setError('');
+    fetch(`${API_BASE_URL}/search?item_name=${encodeURIComponent(query)}`, {
+      signal: controller.signal
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`Search failed (${response.status})`);
+        return response.json() as Promise<SearchResult[]>;
+      })
+      .then((results) => setPharmacies(results.map(toMapPharmacy)))
+      .catch((fetchError: Error) => {
+        if (fetchError.name !== 'AbortError') setError(fetchError.message);
+      });
+    return () => controller.abort();
+  }, [query]);
+
   const handleBack = () => {
-    navigate('/?q=Sterile+Dressing+Kit');
+    navigate(query ? `/?q=${encodeURIComponent(query)}` : '/search');
   };
   return (
     <div className="min-h-screen bg-iceWhite text-obsidian font-sans selection:bg-arcticNavy/10 overflow-x-hidden">
@@ -175,8 +173,8 @@ export function MapView() {
             Showing results for
           </p>
           <p className="text-lg font-black tracking-tight text-obsidian">
-            "Sterile Dressing Kit"{' '}
-            <span className="text-arcticNavy/40 mx-2">—</span> 6 pharmacies
+            "{query}"{' '}
+            <span className="text-arcticNavy/40 mx-2">—</span> {pharmacies.length} pharmacies
             nearby
           </p>
         </div>
@@ -209,13 +207,13 @@ export function MapView() {
               </div>
 
               {/* Pins */}
-              {PHARMACIES.map((p) => {
-                const isActive = activeId === p.id;
+              {pharmacies.map((p) => {
+                const isActive = activeId === p.pharmacy_id;
                 const colors = getStatusColors(p.status);
                 return (
                   <motion.button
-                    key={p.id}
-                    onClick={() => setActiveId(isActive ? null : p.id)}
+                    key={p.pharmacy_id}
+                    onClick={() => setActiveId(isActive ? null : p.pharmacy_id)}
                     initial={false}
                     animate={{
                       scale: isActive ? 1.2 : 1,
@@ -278,7 +276,7 @@ export function MapView() {
                     <div className="flex justify-between items-start mb-6">
                       <div>
                         <h3 className="text-xl font-black tracking-tight text-obsidian mb-2">
-                          {active.name}
+                          {active.pharmacy_name}
                         </h3>
                         <div className="flex flex-wrap items-center gap-3">
                           <span
@@ -288,11 +286,11 @@ export function MapView() {
                           </span>
                           <span className="flex items-center gap-1.5 text-xs font-bold text-steelBlue">
                             <MapPinIcon className="w-3 h-3" />
-                            {active.distance} away
+                            {active.distance_km !== null ? `${active.distance_km} km away` : active.address}
                           </span>
                           <span className="flex items-center gap-1.5 text-xs font-bold text-steelBlue/60">
                             <ClockIcon className="w-3 h-3" />
-                            Updated {active.lastUpdated}
+                            Updated {new Date(active.last_updated).toLocaleString()}
                           </span>
                         </div>
                       </div>
@@ -305,18 +303,18 @@ export function MapView() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <button className="flex items-center justify-center gap-2 bg-arcticNavy text-iceWhite py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-obsidian transition-all shadow-lg shadow-arcticNavy/10">
+                      <a href={active.phone ? `tel:${active.phone}` : undefined} className="flex items-center justify-center gap-2 bg-arcticNavy text-iceWhite py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-obsidian transition-all shadow-lg shadow-arcticNavy/10">
                         <PhoneIcon className="w-4 h-4" />
                         Call
-                      </button>
-                      <button className="flex items-center justify-center gap-2 bg-[#25D366] text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-green-500/10">
+                      </a>
+                      <a href={active.whatsapp ? `https://wa.me/${active.whatsapp.replace(/\D/g, '')}` : undefined} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-[#25D366] text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-green-500/10">
                         <MessageCircleIcon className="w-4 h-4" />
                         WhatsApp
-                      </button>
-                      <button className="flex items-center justify-center gap-2 bg-white border border-silverMist text-obsidian py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-iceWhite transition-all">
+                      </a>
+                      <a href={directionsUrl(active)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-white border border-silverMist text-obsidian py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-iceWhite transition-all">
                         <NavigationIcon className="w-4 h-4" />
                         Directions
-                      </button>
+                      </a>
                     </div>
                   </motion.div>
                 }
@@ -340,13 +338,14 @@ export function MapView() {
 
           {/* Sidebar List */}
           <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
-            {PHARMACIES.map((p) => {
-              const isActive = activeId === p.id;
+            {error && <p className="p-6 rounded-2xl bg-red-50 text-red-700 font-bold">{error}</p>}
+            {pharmacies.map((p) => {
+              const isActive = activeId === p.pharmacy_id;
               const colors = getStatusColors(p.status);
               return (
                 <motion.div
-                  key={p.id}
-                  onClick={() => setActiveId(p.id)}
+                  key={p.pharmacy_id}
+                  onClick={() => setActiveId(p.pharmacy_id)}
                   whileHover={{
                     x: 4
                   }}
@@ -356,7 +355,7 @@ export function MapView() {
                     <h4
                       className={`font-black tracking-tight text-sm ${isActive ? 'text-iceWhite' : 'text-obsidian'}`}>
 
-                      {p.name}
+                      {p.pharmacy_name}
                     </h4>
                     <span
                       className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${isActive ? 'bg-white/20 text-iceWhite' : `${colors.bg} ${colors.text}`}`}>
@@ -369,11 +368,11 @@ export function MapView() {
 
                     <p className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
                       <MapPinIcon className="w-3 h-3" />
-                      {p.distance} away
+                      {p.distance_km !== null ? `${p.distance_km} km away` : p.address}
                     </p>
                     <p className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
                       <ClockIcon className="w-3 h-3" />
-                      Updated {p.lastUpdated}
+                      Updated {new Date(p.last_updated).toLocaleString()}
                     </p>
                   </div>
                 </motion.div>);

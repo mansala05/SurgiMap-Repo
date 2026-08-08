@@ -60,68 +60,38 @@ const FOOTER_LINKS = {
   Support: ['Help center', 'Contact', 'Privacy and Terms']
 };
 
-const MOCK_PHARMACIES = [
-  {
-    id: 1,
-    name: 'City Med Pharmacy',
-    item: 'Caesarean Surgical Kit',
-    distance: '1.2 km',
-    address: 'Colombo 07',
-    lastUpdated: 'Jun 26, 2026, 8:24 AM',
-    availability: 'Available',
-    availabilityColor: 'text-green-600',
-    image:
-      'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=400',
-    phone: '+94 11 234 5678',
-    whatsapp: '+94 77 123 4567',
-    mapUrl: 'https://www.google.com/maps/search/City+Med+Pharmacy+Colombo+07'
-  },
-  {
-    id: 2,
-    name: 'Royal Med Pharmacy',
-    item: 'Caesarean Surgical Kit',
-    distance: '1.8 km',
-    address: 'Kollupitiya',
-    lastUpdated: 'Jun 26, 2026, 8:24 AM',
-    availability: 'Available',
-    availabilityColor: 'text-green-600',
-    image:
-      'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&q=80&w=400',
-    phone: '+94 11 234 5679',
-    whatsapp: '+94 77 123 4568',
-    mapUrl: 'https://www.google.com/maps/search/Royal+Med+Pharmacy+Kollupitiya'
-  },
-  {
-    id: 3,
-    name: 'CarePlus Pharmacy',
-    item: 'Caesarean Surgical Kit',
-    distance: '2.4 km',
-    address: 'Bambalapitiya',
-    lastUpdated: 'Jun 26, 2026, 8:24 AM',
-    availability: 'Low Stock',
-    availabilityColor: 'text-yellow-600',
-    image:
-      'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=400',
-    phone: '+94 11 234 5680',
-    whatsapp: '+94 77 123 4569',
-    mapUrl:
-      'https://www.google.com/maps/search/CarePlus+Pharmacy+Bambalapitiya'
-  },
-  {
-    id: 4,
-    name: 'LifeLine Pharmacy',
-    item: 'Caesarean Surgical Kit',
-    distance: '3.1 km',
-    address: 'Dehiwala',
-    lastUpdated: 'Jun 26, 2026, 8:20 AM',
-    availability: 'Out of Stock',
-    availabilityColor: 'text-red-600',
-    image:
-      'https://images.unsplash.com/photo-1587854692152-cbe660dbbb88?auto=format&fit=crop&q=80&w=400',
-    phone: '+94 11 234 5681',
-    whatsapp: '+94 77 123 4570',
-    mapUrl: 'https://www.google.com/maps/search/LifeLine+Pharmacy+Dehiwala'
-  }];
+type SearchResult = {
+  pharmacy_id: number;
+  pharmacy_name: string;
+  address: string;
+  phone: string | null;
+  whatsapp: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  distance_km: number | null;
+  kit_name: string;
+  quantity: number;
+  status: string;
+  last_updated: string;
+};
+
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000')
+  .replace(/\/$/, '');
+const KIT_IMAGE =
+  'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=400';
+
+function statusColor(status: string) {
+  if (status === 'Available') return 'text-green-600';
+  if (status === 'Low Stock') return 'text-yellow-600';
+  return 'text-red-600';
+}
+
+function mapUrl(result: SearchResult) {
+  const destination = result.latitude !== null && result.longitude !== null
+    ? `${result.latitude},${result.longitude}`
+    : `${result.pharmacy_name}, ${result.address}`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination)}`;
+}
 
 const SEARCH_CHIPS = [
   'caesarean',
@@ -149,9 +119,52 @@ export function Home() {
 
   const query = searchParams.get('q') || '';
   const [searchInput, setSearchInput] = useState(query);
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
 
   useEffect(() => {
     setSearchInput(query);
+  }, [query]);
+
+  useEffect(() => {
+    if (!query) {
+      setResults([]);
+      setSearchError('');
+      setIsSearching(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setIsSearching(true);
+    setSearchError('');
+
+    fetch(`${API_BASE_URL}/search?item_name=${encodeURIComponent(query)}`, {
+      signal: controller.signal
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const body = await response.json().catch(() => null);
+          throw new Error(body?.detail || `Search failed (${response.status})`);
+        }
+        return response.json() as Promise<SearchResult[]>;
+      })
+      .then(setResults)
+      .catch((error: Error) => {
+        if (error.name !== 'AbortError') {
+          setResults([]);
+          setSearchError(
+            error.message === 'Failed to fetch'
+              ? 'Cannot reach the SurgiMap API. Start the project with ./start.sh and try again.'
+              : error.message
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsSearching(false);
+      });
+
+    return () => controller.abort();
   }, [query]);
 
   const handleSearch = (e?: React.FormEvent) => {
@@ -219,10 +232,11 @@ export function Home() {
 
         <div className="w-full max-w-4xl flex items-center justify-between mb-8">
           <p className="text-steelBlue font-bold">
-            {MOCK_PHARMACIES.length} pharmacies found
+            {isSearching ? 'Searching live inventory…' : `${results.length} pharmacies found`}
           </p>
           <button
-            onClick={() => navigate('/map-view')}
+            onClick={() => navigate(`/map-view?q=${encodeURIComponent(query)}`)}
+            disabled={isSearching || results.length === 0}
             className="flex items-center gap-2 bg-white border border-silverMist text-arcticNavy px-6 py-2.5 rounded-xl font-bold text-sm uppercase tracking-widest hover:border-arcticNavy transition-all shadow-sm">
 
             <MapPinIcon className="w-4 h-4" />
@@ -232,17 +246,28 @@ export function Home() {
 
         {/* Pharmacy Cards */}
         <div className="w-full max-w-4xl space-y-8">
-          {MOCK_PHARMACIES.map((pharmacy) =>
+          {searchError &&
+            <div className="bg-red-50 border border-red-200 text-red-700 rounded-2xl p-6 text-center font-bold">
+              {searchError}
+            </div>
+          }
+          {!isSearching && !searchError && results.length === 0 &&
+            <div className="bg-white border border-silverMist rounded-2xl p-10 text-center">
+              <h2 className="text-2xl font-black text-arcticNavy mb-2">No stocked pharmacies found</h2>
+              <p className="text-steelBlue">Try caesarean, appendix, suture, dressing, or general surgery.</p>
+            </div>
+          }
+          {results.map((pharmacy) =>
             <div
-              key={pharmacy.id}
+              key={`${pharmacy.pharmacy_id}-${pharmacy.kit_name}`}
               className="bg-white border border-silverMist rounded-[2rem] overflow-hidden shadow-xl shadow-arcticNavy/5 hover:shadow-2xl hover:shadow-arcticNavy/10 transition-all duration-300 group">
 
               <div className="flex flex-col md:flex-row">
                 {/* Kit Image */}
                 <div className="md:w-2/5 h-64 md:h-auto relative overflow-hidden">
                   <img
-                    src={pharmacy.image}
-                    alt={pharmacy.item}
+                    src={KIT_IMAGE}
+                    alt={pharmacy.kit_name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
 
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
@@ -252,12 +277,12 @@ export function Home() {
                 <div className="flex-1 p-10">
                   <div className="flex justify-between items-start mb-6">
                     <h3 className="text-3xl font-black text-arcticNavy tracking-tight leading-tight">
-                      {pharmacy.name}
+                      {pharmacy.pharmacy_name}
                     </h3>
                     <span
-                      className={`font-black text-sm uppercase tracking-widest px-4 py-2 rounded-full bg-white border border-silverMist shadow-sm ${pharmacy.availabilityColor}`}>
+                      className={`font-black text-sm uppercase tracking-widest px-4 py-2 rounded-full bg-white border border-silverMist shadow-sm ${statusColor(pharmacy.status)}`}>
 
-                      {pharmacy.availability}
+                      {pharmacy.status} · {pharmacy.quantity}
                     </span>
                   </div>
 
@@ -268,7 +293,7 @@ export function Home() {
                         <span className="text-steelBlue uppercase tracking-tighter text-xs mr-2">
                           Item
                         </span>{' '}
-                        {pharmacy.item}
+                        {pharmacy.kit_name}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -277,36 +302,37 @@ export function Home() {
                         <span className="text-steelBlue uppercase tracking-tighter text-xs mr-2">
                           Location
                         </span>{' '}
-                        {pharmacy.address} • {pharmacy.distance}
+                        {pharmacy.address}
+                        {pharmacy.distance_km !== null ? ` • ${pharmacy.distance_km} km` : ''}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
                       <ZapIcon className="w-5 h-5 text-arcticNavy opacity-50" />
                       <p className="text-xs font-bold text-steelBlue uppercase tracking-widest">
-                        Updated {pharmacy.lastUpdated}
+                        Updated {new Date(pharmacy.last_updated).toLocaleString()}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap gap-6 pt-6 border-t border-silverMist/30">
-                    <a
+                    {pharmacy.phone && <a
                       href={`tel:${pharmacy.phone}`}
                       className="flex items-center gap-2 text-arcticNavy hover:text-obsidian font-bold text-sm uppercase tracking-widest transition-colors">
 
                       <PhoneCallIcon className="w-5 h-5" />
                       Call
-                    </a>
-                    <a
-                      href={`https://wa.me/${pharmacy.whatsapp.replace(/\s+/g, '')}`}
+                    </a>}
+                    {pharmacy.whatsapp && <a
+                      href={`https://wa.me/${pharmacy.whatsapp.replace(/\D/g, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-green-600 hover:text-green-700 font-bold text-sm uppercase tracking-widest transition-colors">
 
                       <MessageCircleIcon className="w-5 h-5" />
                       WhatsApp
-                    </a>
+                    </a>}
                     <a
-                      href={pharmacy.mapUrl}
+                      href={mapUrl(pharmacy)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-steelBlue hover:text-arcticNavy font-bold text-sm uppercase tracking-widest transition-colors">
