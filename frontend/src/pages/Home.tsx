@@ -12,8 +12,7 @@ import {
   PhoneIcon,
   PhoneCallIcon,
   MessageCircleIcon,
-  NavigationIcon,
-  LogInIcon
+  NavigationIcon
 } from
   'lucide-react';
 import { searchStock, suggestKits, type StockResult } from '../lib/api';
@@ -470,9 +469,8 @@ export function Home() {
             </a>
             <a
               href="/login"
-              className="flex items-center gap-2 rounded-lg border border-arcticNavy px-4 py-2 text-xs font-bold uppercase tracking-wider text-arcticNavy transition-all hover:bg-arcticNavy hover:text-iceWhite">
-              <LogInIcon className="h-4 w-4" />
-              Pharmacy Login
+              className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all border ${location.pathname === '/login' ? 'border-arcticNavy text-arcticNavy bg-arcticNavy/10' : 'border-silverMist text-steelBlue hover:border-arcticNavy hover:text-arcticNavy'}`}>
+              Login
             </a>
             <a
               href="/search"
@@ -825,9 +823,8 @@ export function Home() {
 
           <a
             href="/login"
-            className="flex items-center gap-2 rounded-full bg-arcticNavy px-8 py-3 text-sm font-bold uppercase tracking-widest text-iceWhite transition-all hover:bg-obsidian">
-            <LogInIcon className="h-5 w-5" />
-            Pharmacy Login
+            className="text-5xl font-black tracking-tighter text-arcticNavy hover:text-glacierBlue transition-colors">
+            Login
           </a>
 
           <a href="#contact"
