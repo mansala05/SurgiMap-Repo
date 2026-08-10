@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   SearchIcon,
   MapPinIcon,
@@ -11,7 +11,7 @@ import {
 } from
   'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 const NAV_LINKS = ['About', 'How it works', 'Help'];
 const STEPS = [
@@ -45,30 +45,12 @@ const STEPS = [
   {
     tag: 'STEP 4',
     title: 'Find Nearby Pharmacies',
-    desc: 'Search any location to discover nearby pharmacies, view directions, and explore available healthcare services on Google Maps.',
+    desc: 'Search any location to discover nearby pharmacies, view directions, and explore available healthcare services on OpenStreetMap.',
     cta: 'View on Map',
-    href: 'https://www.google.com/maps/dir/?api=1&destination=pharmacy+near+me',
+    href: '/search',
     icon: <RefreshCwIcon className="w-7 h-7 text-arcticNavy" />,
     image:
       'https://images.unsplash.com/photo-1587854692152-cbe660dbbb88?auto=format&fit=crop&q=80&w=800'
-  }];
-
-const TESTIMONIALS = [
-  {
-    quote:
-      'SurgiMap found exactly what I needed. The search was quick and the pharmacy had the kit ready.',
-    name: 'Amara S.',
-    role: 'Patient relative',
-    avatar: 'AS',
-    logo: 'Colombo General'
-  },
-  {
-    quote:
-      'Quick, clear, and reliable — documented exactly which pharmacies had my kit in stock.',
-    name: 'Dr. Nimal P.',
-    role: 'Surgeon',
-    avatar: 'NP',
-    logo: 'Lanka Medical'
   }];
 
 const FAQS = [
@@ -148,7 +130,6 @@ function FaqItem({ question, answer }: { question: string; answer: string; }) {
 }
 export function HowItWorks() {
   const location = useLocation();
-  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
     <div className="min-h-screen bg-iceWhite text-obsidian font-sans selection:bg-arcticNavy/10 overflow-x-hidden">

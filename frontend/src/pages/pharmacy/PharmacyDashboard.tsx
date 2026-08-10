@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   PackageIcon,
@@ -15,61 +15,59 @@ import {
   PlusIcon,
   MinusIcon,
   UserIcon,
-  MapPinIcon,
   ArrowRightIcon,
   TrendingUpIcon,
   TrendingDownIcon,
   CalendarIcon,
   FilterIcon,
 } from 'lucide-react'
-import { useScreenInit } from '../../useScreenInit.js'
-const PHARMACY_NAME = 'City Med Pharmacy'
+import { clearPharmacySession, getPharmacySession } from '../../lib/pharmacySession'
 const INITIAL_STOCK = [
   {
     id: 1,
-    name: 'Caesarean Surgical Kit',
+    name: 'Maternity & Cesarean Section Delivery Kit',
     quantity: 6,
     lastSynced: '9:14 AM',
   },
   {
     id: 2,
-    name: 'Appendectomy Kit',
+    name: 'Laparoscopic / Abdominal Surgery Kit',
     quantity: 2,
     lastSynced: '9:14 AM',
   },
   {
     id: 3,
-    name: 'Sterile Dressing Kit',
+    name: 'Orthopedic & Major Joint Surgery Prep Kit',
     quantity: 8,
     lastSynced: '9:10 AM',
   },
   {
     id: 4,
-    name: 'General Surgery Kit',
+    name: 'Minor Surgical & Suture Removal Kit',
     quantity: 0,
     lastSynced: '9:05 AM',
   },
   {
     id: 5,
-    name: 'Suture Kit',
+    name: 'Cataract & Eye Surgery Kit',
     quantity: 3,
     lastSynced: '9:14 AM',
   },
   {
     id: 6,
-    name: 'IV Cannula Set',
+    name: 'Wound Care & Post-Operative Dressing Kit',
     quantity: 12,
     lastSynced: '8:58 AM',
   },
   {
     id: 7,
-    name: 'Wound Closure Kit',
+    name: 'Disposable Trocar Set 10mm & 5mm',
     quantity: 1,
     lastSynced: '9:00 AM',
   },
   {
     id: 8,
-    name: 'Catheter Insertion Kit',
+    name: 'Sterile Surgical Gown',
     quantity: 0,
     lastSynced: '8:45 AM',
   },
@@ -78,7 +76,7 @@ const INITIAL_ORDERS = [
   {
     id: 'ORD-8821',
     customer: 'Amara Silva',
-    items: 'Caesarean Kit (1)',
+    items: 'Maternity Delivery Kit (1)',
     status: 'pending',
     time: '10 mins ago',
     type: 'Request',
@@ -86,7 +84,7 @@ const INITIAL_ORDERS = [
   {
     id: 'ORD-8819',
     customer: 'Dr. Nimal',
-    items: 'Suture Kit (2)',
+    items: 'Minor Surgical Kit (2)',
     status: 'confirmed',
     time: '45 mins ago',
     type: 'Order',
@@ -94,7 +92,7 @@ const INITIAL_ORDERS = [
   {
     id: 'ORD-8815',
     customer: 'Kamal Perera',
-    items: 'Sterile Dressing (1)',
+    items: 'Wound Care Kit (1)',
     status: 'ready',
     time: '1 hr ago',
     type: 'Request',
@@ -102,7 +100,7 @@ const INITIAL_ORDERS = [
   {
     id: 'ORD-8812',
     customer: 'Lanka Hospital',
-    items: 'General Surgery (5)',
+    items: 'Laparoscopic Kit (5)',
     status: 'cancelled',
     time: '3 hrs ago',
     type: 'Order',
@@ -148,15 +146,15 @@ function getStatus(qty: number) {
 }
 export function PharmacyDashboard() {
   const navigate = useNavigate()
-  const location = useLocation()
+  const pharmacySession = getPharmacySession()
+  const pharmacyName = pharmacySession?.pharmacy_name || 'Pharmacy'
   const [activeTab, setActiveTab] = useState('stock')
   const [stock, setStock] = useState(INITIAL_STOCK)
-  const [orders, setOrders] = useState(INITIAL_ORDERS)
+  const orders = INITIAL_ORDERS
   const [saved, setSaved] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [lastSync, setLastSync] = useState('Jul 1, 2026, 9:14 AM')
   const [searchQuery, setSearchQuery] = useState('')
-  useScreenInit()
   const totalAvailable = stock.filter((s) => s.quantity >= 4).length
   const lowStock = stock.filter((s) => s.quantity > 0 && s.quantity <= 3).length
   const outOfStock = stock.filter((s) => s.quantity === 0).length
@@ -253,11 +251,14 @@ export function PharmacyDashboard() {
               Connected as
             </p>
             <p className="text-sm font-bold text-white truncate">
-              {PHARMACY_NAME}
+              {pharmacyName}
             </p>
           </div>
           <button
-            onClick={() => navigate('/login')}
+            onClick={() => {
+              clearPharmacySession()
+              navigate('/login', { replace: true, state: { message: 'You have signed out.' } })
+            }}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-400 hover:bg-red-400/10 transition-all"
           >
             <LogOutIcon className="w-5 h-5" />
@@ -745,22 +746,22 @@ export function PharmacyDashboard() {
                       <div className="space-y-6">
                         {[
                           {
-                            name: 'Caesarean Surgical Kit',
+                            name: 'Maternity Delivery Kit',
                             count: 420,
                             trend: '+12%',
                           },
                           {
-                            name: 'Appendectomy Kit',
+                            name: 'Laparoscopic Surgery Kit',
                             count: 310,
                             trend: '+5%',
                           },
                           {
-                            name: 'Suture Kit',
+                            name: 'Minor Surgical Kit',
                             count: 280,
                             trend: '-2%',
                           },
                           {
-                            name: 'Sterile Dressing Kit',
+                            name: 'Wound Care Kit',
                             count: 190,
                             trend: '+8%',
                           },

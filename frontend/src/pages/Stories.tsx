@@ -1,5 +1,4 @@
-import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon } from 'lucide-react';
 
 const ALL_STORIES = [
@@ -48,7 +47,6 @@ const ALL_STORIES = [
 ];
 
 export function Stories() {
-    const location = useLocation();
     const navigate = useNavigate();
 
     return (
