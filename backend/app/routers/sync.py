@@ -2,6 +2,7 @@ from typing import Annotated
 
 import hmac
 import os
+from datetime import datetime
 
 from fastapi import APIRouter, Body, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
@@ -37,6 +38,7 @@ def sync_inventory(
 ):
     created = 0
     updated = 0
+    sync_received_at = datetime.now()
 
     normalized_items: list[tuple[schemas.InventorySyncItem, str]] = []
     seen_items: set[tuple[int, str]] = set()
@@ -89,14 +91,14 @@ def sync_inventory(
                         kit_id=kit.id,
                         quantity=item.quantity,
                         status=compute_status(item.quantity),
-                        last_updated=item.last_updated,
+                        last_updated=sync_received_at,
                     )
                 )
                 created += 1
             else:
                 stock_row.quantity = item.quantity
                 stock_row.status = compute_status(item.quantity)
-                stock_row.last_updated = item.last_updated
+                stock_row.last_updated = sync_received_at
                 updated += 1
 
         db.commit()
@@ -112,4 +114,5 @@ def sync_inventory(
         "created": created,
         "updated": updated,
         "total": len(items),
+        "synced_at": sync_received_at.isoformat(),
     }
