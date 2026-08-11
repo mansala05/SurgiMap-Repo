@@ -9,13 +9,11 @@ from pathlib import Path
 import sqlite3
 
 from app.services.master_catalog import MASTER_CATALOG, STANDARD_NAMES, normalize_item_name
+from scripts.demo_config import TOTAL_PHARMACIES, demo_updated_at
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BACKEND_DIR / "data"
 CENTRAL_DB = BACKEND_DIR / "surgimap.db"
-TOTAL_PHARMACIES = 10
-
-
 def _aliases_by_item() -> dict[str, list[str]]:
     aliases: dict[str, list[str]] = defaultdict(list)
     for local_name, standard_name in MASTER_CATALOG.items():
@@ -44,7 +42,7 @@ PHARMACY_DATA = build_pharmacy_data()
 def create_pharmacy_db(pharmacy_id: int, items: list[tuple[str, int]]) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     db_path = DATA_DIR / f"pharmacy_{pharmacy_id:02d}.db"
-    updated_at = datetime.now().isoformat()
+    snapshot_time = datetime.now()
     with sqlite3.connect(db_path) as connection:
         cursor = connection.cursor()
         cursor.execute(
@@ -60,7 +58,18 @@ def create_pharmacy_db(pharmacy_id: int, items: list[tuple[str, int]]) -> None:
         cursor.execute("DELETE FROM inventory")
         cursor.executemany(
             "INSERT INTO inventory (item_name, quantity, updated_at) VALUES (?, ?, ?)",
-            [(name, quantity, updated_at) for name, quantity in items],
+            [
+                (
+                    name,
+                    quantity,
+                    demo_updated_at(
+                        pharmacy_id,
+                        item_index=item_index,
+                        now=snapshot_time,
+                    ).isoformat(),
+                )
+                for item_index, (name, quantity) in enumerate(items)
+            ],
         )
     print(f"Created {db_path.name} with {len(items)} catalog items")
 
@@ -88,9 +97,9 @@ def create_central_db() -> None:
         db.add_all(kits.values())
         db.flush()
 
-        updated_at = datetime.now()
+        snapshot_time = datetime.now()
         for pharmacy_id, inventory in PHARMACY_DATA.items():
-            for local_name, quantity in inventory:
+            for item_index, (local_name, quantity) in enumerate(inventory):
                 standard_name = normalize_item_name(local_name)
                 db.add(
                     models.Stock(
@@ -98,7 +107,11 @@ def create_central_db() -> None:
                         kit_id=kits[standard_name].id,
                         quantity=quantity,
                         status=compute_status(quantity),
-                        last_updated=updated_at,
+                        last_updated=demo_updated_at(
+                            pharmacy_id,
+                            item_index=item_index,
+                            now=snapshot_time,
+                        ),
                     )
                 )
         db.commit()

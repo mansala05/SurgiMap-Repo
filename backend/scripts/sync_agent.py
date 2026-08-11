@@ -7,12 +7,14 @@ import json
 import os
 from pathlib import Path
 import sqlite3
+import time
 import urllib.error
 import urllib.request
 
 from dotenv import load_dotenv
 
 from app.services.master_catalog import normalize_item_name
+from scripts.demo_config import TOTAL_PHARMACIES
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 load_dotenv(BACKEND_DIR / ".env")
@@ -23,7 +25,7 @@ BACKEND_SYNC_URL = os.getenv(
     "http://127.0.0.1:8000/sync/inventory",
 )
 SYNC_API_KEY = os.getenv("SURGIMAP_SYNC_API_KEY", "surgimap-local-demo-key")
-TOTAL_PHARMACIES = 10
+DEFAULT_SYNC_INTERVAL_SECONDS = os.getenv("SURGIMAP_SYNC_INTERVAL_SECONDS", "30")
 
 
 def get_stock_status(quantity: int) -> str:
@@ -82,6 +84,14 @@ def send_payload(payload: list[dict[str, object]]) -> None:
         ) from error
 
 
+def sync_once(*, prepare_only: bool = False) -> None:
+    payload = build_sync_payload()
+    OUTPUT_FILE.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    print(f"Prepared {len(payload)} records and saved {OUTPUT_FILE.name}.")
+    if not prepare_only:
+        send_payload(payload)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -89,12 +99,43 @@ def main() -> None:
         action="store_true",
         help="Write sync_payload.json without sending it to the API",
     )
+    parser.add_argument(
+        "--watch",
+        action="store_true",
+        help="Keep running and automatically sync at a fixed interval",
+    )
+    parser.add_argument(
+        "--interval",
+        type=float,
+        default=DEFAULT_SYNC_INTERVAL_SECONDS,
+        metavar="SECONDS",
+        help=(
+            "Seconds between automatic syncs (default: "
+            "SURGIMAP_SYNC_INTERVAL_SECONDS or 30)"
+        ),
+    )
     args = parser.parse_args()
-    payload = build_sync_payload()
-    OUTPUT_FILE.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    print(f"Prepared {len(payload)} records and saved {OUTPUT_FILE.name}.")
-    if not args.prepare_only:
-        send_payload(payload)
+    if args.interval <= 0:
+        parser.error("--interval must be greater than zero")
+    if args.prepare_only and args.watch:
+        parser.error("--prepare-only cannot be combined with --watch")
+
+    if not args.watch:
+        sync_once(prepare_only=args.prepare_only)
+        return
+
+    print(f"Automatic sync enabled. Syncing every {args.interval:g} seconds.")
+    try:
+        while True:
+            try:
+                sync_once()
+                retry_delay = args.interval
+            except RuntimeError as error:
+                retry_delay = min(args.interval, 5)
+                print(f"Sync failed: {error}. Retrying in {retry_delay:g} seconds.")
+            time.sleep(retry_delay)
+    except KeyboardInterrupt:
+        print("Automatic sync stopped.")
 
 
 if __name__ == "__main__":

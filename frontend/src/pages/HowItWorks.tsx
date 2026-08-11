@@ -50,7 +50,7 @@ const STEPS = [
     href: '/search',
     icon: <RefreshCwIcon className="w-7 h-7 text-arcticNavy" />,
     image:
-      'https://images.unsplash.com/photo-1587854692152-cbe660dbbb88?auto=format&fit=crop&q=80&w=800'
+      'https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&q=80&w=800'
   }];
 
 const FAQS = [

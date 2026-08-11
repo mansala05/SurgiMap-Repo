@@ -12,7 +12,7 @@ import {
 import { OpenStreetResultsMap } from '../components/OpenStreetResultsMap';
 import { searchStock, type StockResult } from '../lib/api';
 import { resolveUserLocation, type LocationStatus, type UserLocation } from '../lib/location';
-import { formatStockAge, isStockStale } from '../lib/stock';
+import { formatStockAge, formatStockTimestamp, isStockStale } from '../lib/stock';
 
 type MappedStockResult = StockResult & { latitude: number; longitude: number };
 type MapNavigationState = {
@@ -133,7 +133,7 @@ export function MapView() {
           <p className="text-xs text-steelBlue mt-1">
             {locationStatus === 'ready' && userLocation
               ? `Nearest first from ${userLocation.label}`
-              : 'Distance sorting is off'}
+              : 'Sorted by stock level and update freshness'}
           </p>
         </div>
       </header>
@@ -183,7 +183,7 @@ export function MapView() {
                   </div>
                   <div className={`space-y-2 text-[10px] font-bold uppercase tracking-widest ${isActive ? 'text-white/70' : 'text-steelBlue/70'}`}>
                     <p className="flex items-center gap-2"><MapPinIcon className="w-3 h-3" />{pharmacy.address}{pharmacy.distance_km !== null ? ` · ${pharmacy.distance_km.toFixed(1)} km` : ''}</p>
-                    <p className="flex items-center gap-2"><ClockIcon className="w-3 h-3" />Updated {formatStockAge(pharmacy.last_updated)}</p>
+                    <p className="flex items-center gap-2" title={`Last synced ${formatStockTimestamp(pharmacy.last_updated)}`}><ClockIcon className="w-3 h-3" />Updated {formatStockAge(pharmacy.last_updated)}</p>
                     {isStockStale(pharmacy.last_updated) && <p className={isActive ? 'text-amber-200' : 'text-amber-700'}>Call to verify this older update</p>}
                   </div>
 

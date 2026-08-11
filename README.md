@@ -65,10 +65,15 @@ Open a second terminal from `backend/`:
 
 ```bash
 source .venv/bin/activate
-python -m scripts.sync_agent
+python -m scripts.sync_agent --watch
 ```
 
-This reads all ten files in `backend/data/`, normalizes local item names, and sends 590 records to `POST /sync/inventory`. The expanded master catalog contains 59 canonical kits and surgical items with 396 patient/pharmacy aliases.
+Automatic mode syncs immediately and then repeats every 30 seconds. Change the
+interval with `--interval 10` or the `SURGIMAP_SYNC_INTERVAL_SECONDS` environment
+variable. Press Ctrl+C to stop it. Running `./start.sh` starts this automatic sync
+process together with the backend and frontend.
+
+Each sync reads all ten files in `backend/data/`, normalizes local item names, and sends 590 records to `POST /sync/inventory`. The expanded master catalog contains 59 canonical kits and surgical items with 396 patient/pharmacy aliases. A one-time manual sync remains available with `python -m scripts.sync_agent`.
 
 The sync endpoint requires the `X-Sync-Key` header. The sync agent reads the same `SURGIMAP_SYNC_API_KEY` value from `backend/.env` automatically. Change the example key before any shared or deployed demo. The backend recalculates canonical item names and stock statuses instead of trusting submitted values, rejects duplicate batch entries, and limits each request to 1,000 items. Direct public stock mutation routes are not exposed.
 
@@ -82,8 +87,32 @@ Change one stock value for the live-sync demonstration:
 
 ```bash
 python -m scripts.update_demo_stock --pharmacy 1 --item "C Section Kit" --quantity 2
-python -m scripts.sync_agent
 ```
+
+To set the same item quantity across all ten simulated pharmacy databases:
+
+```bash
+python -m scripts.update_demo_stock --all-pharmacies --item "C Section Kit" --quantity 2
+```
+
+Bulk demo updates use pharmacy-specific timestamps so search results resemble
+independent inventory systems. To refresh those demo timestamps without changing
+quantities, run:
+
+```bash
+python -m scripts.update_demo_stock --all-pharmacies --item "Orthopedic & Major Joint Surgery Prep Kit" --refresh-only
+```
+
+To refresh realistic timestamps across the complete 590-record demo inventory
+without changing any quantities:
+
+```bash
+python -m scripts.refresh_demo_freshness
+```
+
+When automatic sync is running, the updated quantity appears in search within the
+configured interval. Run `python -m scripts.sync_agent` afterward only when using
+one-time manual mode.
 
 Search example:
 
