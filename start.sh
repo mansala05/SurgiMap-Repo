@@ -22,8 +22,8 @@ export DATABASE_URL="${DATABASE_URL:-sqlite:///$backend_dir/surgimap.db}"
 
 cleanup() {
   trap - INT TERM EXIT
-  kill "${backend_pid:-}" "${frontend_pid:-}" 2>/dev/null || true
-  wait "${backend_pid:-}" "${frontend_pid:-}" 2>/dev/null || true
+  kill "${backend_pid:-}" "${frontend_pid:-}" "${sync_pid:-}" 2>/dev/null || true
+  wait "${backend_pid:-}" "${frontend_pid:-}" "${sync_pid:-}" 2>/dev/null || true
 }
 trap cleanup INT TERM EXIT
 
@@ -39,8 +39,15 @@ backend_pid=$!
 ) &
 frontend_pid=$!
 
+(
+  cd "$backend_dir"
+  exec .venv/bin/python -m scripts.sync_agent --watch
+) &
+sync_pid=$!
+
 echo "SurgiMap backend:  http://127.0.0.1:8000"
 echo "SurgiMap frontend: http://localhost:5173"
-echo "Press Ctrl+C to stop both servers."
+echo "Inventory sync:    automatic every ${SURGIMAP_SYNC_INTERVAL_SECONDS:-30} seconds"
+echo "Press Ctrl+C to stop all services."
 
-wait "$backend_pid" "$frontend_pid"
+wait "$backend_pid" "$frontend_pid" "$sync_pid"

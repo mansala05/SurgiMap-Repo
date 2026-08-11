@@ -40,7 +40,7 @@ Now we will show the working demo.
 
 First, we start the FastAPI backend.
 
-Then we run the Python Sync Agent. The sync agent reads all 10 pharmacy databases and sends 50 inventory records to the backend.
+The project launcher also starts the Python Sync Agent in automatic mode. It syncs immediately, then checks all 10 pharmacy databases every 30 seconds and sends 590 inventory records to the backend.
 
 The agent automatically includes the secure sync key configured in `backend/.env`; this key is never sent to the patient-facing browser.
 
@@ -72,9 +72,7 @@ Now we demonstrate the sync behavior.
 
 We update the stock quantity of one item in a local pharmacy database.
 
-After that, we run the Sync Agent again.
-
-The backend receives the updated inventory data.
+The running Sync Agent detects the latest database state on its next scheduled sync, and the backend receives the updated inventory data automatically.
 
 When we search again in the frontend, the result list changes according to the updated stock status.
 

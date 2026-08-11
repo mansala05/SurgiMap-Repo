@@ -35,7 +35,7 @@ const KIT_PRESENTATION = [
     name: 'Minor Surgical & Suture Removal Kit',
     category: 'Minor Surgery',
     image:
-      'https://images.unsplash.com/photo-1587854692152-cbe660dbbb88?auto=format&fit=crop&q=80&w=800'
+      'https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&q=80&w=800'
   },
   {
     id: 5,

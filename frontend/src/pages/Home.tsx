@@ -9,12 +9,10 @@ import {
   MessageSquareIcon,
   ZapIcon,
   MailIcon,
-  PhoneIcon,
-  PhoneCallIcon,
-  MessageCircleIcon,
-  NavigationIcon
+  PhoneIcon
 } from
   'lucide-react';
+import { PharmacyResultCard } from '../components/PharmacyResultCard';
 import { searchStock, suggestKits, type StockResult } from '../lib/api';
 import {
   AREA_LOCATIONS,
@@ -24,7 +22,6 @@ import {
   type LocationStatus,
   type UserLocation
 } from '../lib/location';
-import { formatStockAge, isStockStale } from '../lib/stock';
   
 
 const NAV_LINKS = ['About', 'How it works', 'Help'];
@@ -70,9 +67,6 @@ const FOOTER_LINKS = {
   Company: ['About', 'Features', 'How it works', 'Search'],
   Support: ['Help center', 'Contact', 'Privacy and Terms']
 };
-
-const RESULT_IMAGE =
-  'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=400';
 
 const SEARCH_CHIPS = [
   'maternity kit',
@@ -280,7 +274,7 @@ export function Home() {
               <p className="text-xs text-steelBlue/70 mt-1">
                 {locationStatus === 'ready' && results.every((result) => result.distance_km !== null)
                   ? `Nearest pharmacies shown first from ${userLocation?.label}`
-                  : 'Distance sorting is off'}
+                  : 'Sorted by stock level and update freshness'}
               </p>
             }
           </div>
@@ -329,101 +323,11 @@ export function Home() {
         {/* Pharmacy Cards */}
         <div className="w-full max-w-4xl space-y-8">
           {results.map((pharmacy) =>
-            <div
+            <PharmacyResultCard
               key={pharmacy.pharmacy_id}
-              className="bg-white border border-silverMist rounded-[2rem] overflow-hidden shadow-xl shadow-arcticNavy/5 hover:shadow-2xl hover:shadow-arcticNavy/10 transition-all duration-300 group">
-
-              <div className="flex flex-col md:flex-row">
-                {/* Kit Image */}
-                <div className="md:w-2/5 h-64 md:h-auto relative overflow-hidden">
-                  <img
-                    src={RESULT_IMAGE}
-                    alt={pharmacy.kit_name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 p-10">
-                  <div className="flex justify-between items-start mb-6">
-                    <h3 className="text-3xl font-black text-arcticNavy tracking-tight leading-tight">
-                      {pharmacy.pharmacy_name}
-                    </h3>
-                    <span
-                      className={`font-black text-sm uppercase tracking-widest px-4 py-2 rounded-full bg-white border border-silverMist shadow-sm ${pharmacy.status === 'Available' ? 'text-green-600' : 'text-yellow-600'}`}>
-
-                      {pharmacy.status}
-                    </span>
-                  </div>
-
-                  <div className="space-y-3 text-obsidian mb-8">
-                    <div className="flex items-center gap-3">
-                      <ZapIcon className="w-5 h-5 text-arcticNavy" />
-                      <p className="text-base font-bold">
-                        <span className="text-steelBlue uppercase tracking-tighter text-xs mr-2">
-                          Item
-                        </span>{' '}
-                        {pharmacy.kit_name}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <MapPinIcon className="w-5 h-5 text-arcticNavy" />
-                      <p className="text-base font-bold">
-                        <span className="text-steelBlue uppercase tracking-tighter text-xs mr-2">
-                          Location
-                        </span>{' '}
-                        {pharmacy.address}
-                        {pharmacy.distance_km !== null ? ` · ${pharmacy.distance_km.toFixed(1)} km away` : ''}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <ZapIcon className="w-5 h-5 text-arcticNavy opacity-50" />
-                      <p className="text-xs font-bold text-steelBlue uppercase tracking-widest">
-                        Updated {formatStockAge(pharmacy.last_updated)}
-                      </p>
-                    </div>
-                    {isStockStale(pharmacy.last_updated) &&
-                      <p className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                        This update is over an hour old. Please call before travelling.
-                      </p>
-                    }
-                  </div>
-
-                  <div className="flex flex-wrap gap-6 pt-6 border-t border-silverMist/30">
-                    {pharmacy.phone && <a
-                      href={`tel:${pharmacy.phone}`}
-                      className="flex items-center gap-2 text-arcticNavy hover:text-obsidian font-bold text-sm uppercase tracking-widest transition-colors">
-
-                      <PhoneCallIcon className="w-5 h-5" />
-                      Call
-                    </a>}
-                    {pharmacy.whatsapp && <a
-                      href={`https://wa.me/${pharmacy.whatsapp.replace(/\D/g, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-green-600 hover:text-green-700 font-bold text-sm uppercase tracking-widest transition-colors">
-
-                      <MessageCircleIcon className="w-5 h-5" />
-                      WhatsApp
-                    </a>}
-                    <a
-                      href={pharmacy.latitude !== null && pharmacy.longitude !== null
-                        ? userLocation
-                          ? `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${userLocation.latitude}%2C${userLocation.longitude}%3B${pharmacy.latitude}%2C${pharmacy.longitude}`
-                          : `https://www.openstreetmap.org/?mlat=${pharmacy.latitude}&mlon=${pharmacy.longitude}#map=16/${pharmacy.latitude}/${pharmacy.longitude}`
-                        : `https://www.openstreetmap.org/search?query=${encodeURIComponent(`${pharmacy.pharmacy_name} ${pharmacy.address}`)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-steelBlue hover:text-arcticNavy font-bold text-sm uppercase tracking-widest transition-colors">
-
-                      <NavigationIcon className="w-5 h-5" />
-                      Directions
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
+              pharmacy={pharmacy}
+              userLocation={userLocation}
+            />
           )}
         </div>
 

@@ -143,6 +143,7 @@ def search_by_kit_name(
                 match_rank.get(result.kit_name, len(match_rank)),
                 result.distance_km is None,
                 result.distance_km or 0,
+                -result.last_updated.timestamp(),
                 result.pharmacy_name,
             )
         )
@@ -151,6 +152,7 @@ def search_by_kit_name(
             key=lambda result: (
                 match_rank.get(result.kit_name, len(match_rank)),
                 -result.quantity,
+                -result.last_updated.timestamp(),
                 result.pharmacy_name,
             )
         )
