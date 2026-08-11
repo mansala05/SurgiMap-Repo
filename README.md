@@ -1,177 +1,207 @@
 # SurgiMap
 
-SurgiMap is a hackathon MVP for finding urgent surgical kits across connected pharmacies. Ten independent SQLite databases simulate pharmacy inventory systems, a Python sync agent normalizes and sends their stock to a central FastAPI service, and a React application shows nearby Available or Low Stock pharmacies.
+**Team Shadow Stack · HackElite 3.0 Phase 2 · Software-only MVP**
+
+SurgiMap helps patients and relatives find nearby pharmacies with urgent surgical kits in stock. It consolidates inventory from ten independent pharmacy data sources, understands inconsistent local item names, and returns only Available or Low Stock results with live sync freshness, distance, map, Call, and WhatsApp actions.
+
+> Medical safety: SurgiMap is a hackathon prototype, not a clinical or purchasing system. Stock can change quickly; users should call the pharmacy before travelling.
+
+## Demo links
+
+- Web app after local start: <http://localhost:5173>
+- API documentation: <http://127.0.0.1:8000/docs>
+- Public repository: <https://github.com/mansala05/SurgiMap-Repo>
+- Demo video: **PENDING — replace this line with the final 7–10 minute public YouTube link before submission**
 
 ## Quick start
 
-After installing the backend and frontend dependencies once (see below), start
-the complete local project from the repository root with:
+Prerequisites: Python 3.11+, Node.js 20+, and npm. Docker is optional.
 
 ```bash
+git clone https://github.com/mansala05/SurgiMap-Repo.git
+cd SurgiMap-Repo
+
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+cd ../frontend
+npm install
+
+cd ..
 ./start.sh
 ```
 
-This starts the API and frontend together and uses the included SQLite database,
-so Docker is not required. Open `http://localhost:5173`. Press Ctrl+C to stop
-both servers. To use another database, supply `DATABASE_URL` when launching the
-script.
+Open <http://localhost:5173>. The launcher starts the API, React app, and inventory agent; it syncs immediately and every 30 seconds. Press `Ctrl+C` once to stop all three processes.
 
-## Project structure
+Windows users can run the three processes in separate terminals using the commands in [the software instructions](output/pdf/ShadowStack.pdf).
 
-```text
-SurgiMap_Cleaned/
-├── backend/
-│   ├── app/                 # Single canonical FastAPI application
-│   │   ├── routers/         # Auth, search, sync, and pharmacy endpoints
-│   │   └── services/        # Item-name normalization catalog
-│   ├── data/                # 10 simulated pharmacy SQLite databases
-│   ├── scripts/             # Demo database, sync, and stock-update tools
-│   ├── tests/               # Backend smoke test
-│   ├── .env.example
-│   └── requirements.txt
-├── frontend/                # React + TypeScript + Vite
-├── compose.yaml             # Proposal-aligned central PostgreSQL service
-├── docs/DEMO_SCRIPT.md
-├── .gitignore
-└── README.md
+## Demo credentials
+
+- Pharmacy portal: <http://localhost:5173/login>
+- Email: `pharmacy@surgimap.lk`
+- Password: `pharmacy123`
+
+These credentials and signing secrets are local-demo defaults only. Replace every value in `backend/.env` for any shared deployment.
+
+## Architecture and system overview
+
+```mermaid
+flowchart TB
+    P["10 simulated pharmacy SQLite databases"]
+    A["Python local sync agent<br/>polls every 30 seconds"]
+    N["Master catalog normalizer<br/>59 canonical items · 396 aliases"]
+    API["FastAPI service<br/>auth · validation · search · distance"]
+    DB[("Central PostgreSQL<br/>SQLite zero-setup fallback")]
+    UI["React + TypeScript web app"]
+    U["Patient / relative"]
+    PH["Authenticated pharmacy monitor"]
+
+    P --> A --> N -->|"API-key protected batch"| API
+    API <--> DB
+    U -->|"search + optional location"| UI --> API
+    API -->|"stock status + freshness + distance"| UI
+    PH -->|"read-only central inventory"| UI
 ```
 
-## Start the central database
+Each pharmacy database represents an independent inventory system. The agent tolerates an unavailable source, normalizes local aliases, and sends a validated batch to the backend. The backend independently derives canonical names and stock status, records sync receipt time, hides zero-stock pharmacies, optionally calculates Haversine distance, and serves the patient UI and authenticated pharmacy monitor.
 
-The proposal architecture uses PostgreSQL for the central inventory. Start it with:
+## Tech stack
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS | Responsive search and pharmacy-monitor interfaces |
+| Maps | Leaflet, OpenStreetMap, OSRM links | Result markers and external directions without a browser API key |
+| API | FastAPI, Pydantic | Typed REST endpoints, validation, auth, and OpenAPI docs |
+| Data | SQLAlchemy, PostgreSQL / SQLite | Portable central inventory store |
+| Integration | Python, SQLite, 30-second polling agent | Simulated multi-pharmacy inventory ingestion |
+| Quality | Pytest, ESLint, TypeScript compiler | API, catalog, auth, sync, lint, and production-build checks |
+
+## Key functionality
+
+- Search by canonical kit, local alias, partial phrase, spelling variation, or short code such as `CSK`.
+- Normalize 396 aliases into 59 searchable kits and surgical items.
+- Return only stocked pharmacies and label results as **Available** or **Low Stock**.
+- Sort matching items predictably and, when location is supplied, place nearest pharmacies first.
+- Show per-pharmacy sync state as **Live**, **Delayed**, or **Offline**, refreshing every 30 seconds.
+- Open Call, WhatsApp, interactive OpenStreetMap, and directions actions from results.
+- Protect inventory ingestion with an API key, revalidate data server-side, reject duplicate batch items, and roll back failed batches.
+- Protect the pharmacy monitor with signed, expiring sessions; the monitor displays real central inventory and cannot bypass the source-of-truth sync flow.
+
+## Demonstrating automatic stock sync
+
+With `./start.sh` running, open another terminal:
+
+```bash
+cd backend
+source .venv/bin/activate
+python -m scripts.update_demo_stock \
+  --pharmacy 1 \
+  --item "Laparoscopic / Abdominal Surgery Kit" \
+  --quantity 2
+```
+
+Search for the kit. The update appears automatically within 30 seconds. To apply a quantity across every simulated pharmacy, use `--all-pharmacies`. To inspect a source database directly:
+
+```bash
+cd backend
+sqlite3 data/pharmacy_01.db
+SELECT item_name, quantity, updated_at FROM inventory LIMIT 10;
+.quit
+```
+
+Rebuild all ten sources and the central SQLite demo database with:
+
+```bash
+cd backend
+source .venv/bin/activate
+python -m scripts.create_demo_databases
+```
+
+## Configuration and deployment
+
+The default launcher uses `backend/surgimap.db`, so judges do not need Docker. To run the proposal-aligned PostgreSQL deployment:
 
 ```bash
 docker compose up -d postgres
 cp backend/.env.example backend/.env
 ```
 
-For a zero-setup local fallback, leave `backend/.env` absent; the backend then uses `backend/surgimap.db` automatically. The ten simulated pharmacy databases remain SQLite in both modes.
+Copy `frontend/.env.example` when the API is hosted at another URL. Production deployment should use managed PostgreSQL, HTTPS, restricted CORS origins, long random sync/auth secrets, and a supervised sync-agent process at each pharmacy. No production URL is claimed for this submission; the fully working local deployment is the evaluated path.
 
-## Run the backend
+## Technical challenges and creative solutions
+
+1. **Inconsistent pharmacy item names.** A search for “C section”, “Cesarean Kit”, or `CSK` must resolve to one stock item. The [master catalog service](backend/app/services/master_catalog.py) combines deterministic normalization, aliases, partial matching, and typo-tolerant suggestions instead of relying on exact database text.
+
+2. **Freshness without misleading users.** Source-row edit time alone made a healthy sync agent look offline, while giving every result the same vague timestamp hid useful state. The [sync endpoint](backend/app/routers/sync.py) records successful receipt time, and the [frontend freshness model](frontend/src/lib/stock.ts) turns that into clear Live, Delayed, and Offline states refreshed every 30 seconds.
+
+3. **A resilient multi-source demo.** One missing or corrupt pharmacy file should not stop nine healthy pharmacies from updating. The [local sync agent](backend/scripts/sync_agent.py) isolates source failures, reports skipped databases, retries API failures, and continues with every valid inventory record.
+
+4. **Safe stock ingestion in a public search product.** The browser must not be able to write stock or trust a client-provided status. The [inventory sync router](backend/app/routers/sync.py) uses a protected server-to-server channel, validates pharmacy IDs and batch size, recalculates canonical names/statuses, rejects duplicates, and uses transaction rollback on failure.
+
+## Scope delivered
+
+### Fully implemented
+
+- Ten independent simulated pharmacy inventory databases with varied quantities, aliases, and timestamps.
+- Automatic 30-second synchronization into a central database.
+- Alias-aware catalog search, typo suggestions, availability filtering, optional location sorting, and search logging.
+- Responsive patient UI with realistic kit imagery, freshness indicators, OpenStreetMap, Call, WhatsApp, and directions.
+- Authenticated read-only pharmacy inventory monitor backed by real central data.
+- SQLite zero-setup mode, optional PostgreSQL service, example environment files, automated tests, and API docs.
+
+### Partially implemented
+
+- **Pharmacy integration:** the agent reads ten SQLite sources for the MVP; adapters for real pharmacy POS/database products are future work.
+- **Authentication:** signed eight-hour demo sessions are implemented for one configured pharmacy account; multi-user administration, password recovery, and audit administration are outside this phase.
+- **Routing:** search distance uses a fast straight-line calculation; the directions action delegates the road route to OpenStreetMap/OSRM.
+
+### Not implemented in this phase
+
+- Reservations, online purchasing, delivery, payments, and clinical recommendations.
+- Real pharmacy onboarding, production hosting, background-job observability, or push/webhook connectors.
+- Native mobile apps and multilingual content.
+
+### Deviations from the ideation architecture
+
+The central store is PostgreSQL-ready through `compose.yaml`, but the submission defaults to SQLite so judges can run it without Docker. Pharmacy systems are simulated as ten SQLite files because access to real commercial inventory databases was not available during the hackathon. Both deviations preserve the proposed data flow and can be replaced without changing the patient search contract.
+
+## Known limitations and judge notes
+
+- Internet access is needed for OpenStreetMap tiles and external route links; search, stock status, Call, and WhatsApp still work without map tiles.
+- Browser geolocation is optional. Denial falls back to stock/name ordering and manual demo locations.
+- Inventory is prototype data. Always verify by phone before travelling.
+- The generated SQLite database files are intentionally included so the MVP works immediately; generated dependencies and build folders are excluded.
+- Before final submission, Team Shadow Stack must replace the pending video line near the top of this README with the public YouTube URL.
+
+## Tests and verification
 
 ```bash
 cd backend
-python3 -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-
-API docs: `http://127.0.0.1:8000/docs`
-
-## Sync the demo inventory
-
-Open a second terminal from `backend/`:
-
-```bash
 source .venv/bin/activate
-python -m scripts.sync_agent --watch
-```
-
-Automatic mode syncs immediately and then repeats every 30 seconds. Change the
-interval with `--interval 10` or the `SURGIMAP_SYNC_INTERVAL_SECONDS` environment
-variable. Press Ctrl+C to stop it. Running `./start.sh` starts this automatic sync
-process together with the backend and frontend.
-
-Each sync reads all ten files in `backend/data/`, normalizes local item names, and sends 590 records to `POST /sync/inventory`. The expanded master catalog contains 59 canonical kits and surgical items with 396 patient/pharmacy aliases. A one-time manual sync remains available with `python -m scripts.sync_agent`.
-
-The sync endpoint requires the `X-Sync-Key` header. The sync agent reads the same `SURGIMAP_SYNC_API_KEY` value from `backend/.env` automatically. Change the example key before any shared or deployed demo. The backend recalculates canonical item names and stock statuses instead of trusting submitted values, rejects duplicate batch entries, and limits each request to 1,000 items. Direct public stock mutation routes are not exposed.
-
-Rebuild all ten local pharmacy databases and the central SQLite demo database when needed:
-
-```bash
-python -m scripts.create_demo_databases
-```
-
-Change one stock value for the live-sync demonstration:
-
-```bash
-python -m scripts.update_demo_stock --pharmacy 1 --item "C Section Kit" --quantity 2
-```
-
-To set the same item quantity across all ten simulated pharmacy databases:
-
-```bash
-python -m scripts.update_demo_stock --all-pharmacies --item "C Section Kit" --quantity 2
-```
-
-Bulk demo updates use pharmacy-specific timestamps so search results resemble
-independent inventory systems. To refresh those demo timestamps without changing
-quantities, run:
-
-```bash
-python -m scripts.update_demo_stock --all-pharmacies --item "Orthopedic & Major Joint Surgery Prep Kit" --refresh-only
-```
-
-To refresh realistic timestamps across the complete 590-record demo inventory
-without changing any quantities:
-
-```bash
-python -m scripts.refresh_demo_freshness
-```
-
-When automatic sync is running, the updated quantity appears in search within the
-configured interval. Run `python -m scripts.sync_agent` afterward only when using
-one-time manual mode.
-
-Search example:
-
-```text
-GET http://127.0.0.1:8000/search?item_name=c%20section%20kit
-```
-
-Location-aware search example:
-
-```text
-GET http://127.0.0.1:8000/search?item_name=caesarean&user_latitude=6.8649&user_longitude=79.8997
-```
-
-When both coordinates are supplied, results are sorted nearest-first and include `distance_km`. Without them, results fall back to stock-level and pharmacy-name ordering. Zero-stock pharmacies are never returned.
-
-Search accepts canonical names, local pharmacy aliases, partial phrases, common spelling variations, and catalog codes such as `CSK`, `ASK`, `GSK`, `STP`, and `DRK`. When no stocked item matches, `GET /search/suggestions?q=...` returns the closest searchable kit names.
-
-## Run the frontend
-
-```bash
-cd frontend
-npm install
-cp .env.example .env
-npm run dev
-```
-
-Frontend URL: `http://localhost:5173`
-
-The frontend connects to the backend at `http://127.0.0.1:8000` by default. For
-another backend URL, change `VITE_API_BASE_URL` before starting Vite.
-
-The results page uses OpenStreetMap tiles through Leaflet, so no browser API key
-is required. Pharmacy markers, the selected user location, and route links are
-rendered directly from the live backend search response. Keep the visible
-OpenStreetMap attribution when changing the map layout or tile provider.
-
-The browser asks for location permission on the first search. Users can retry
-current-location detection or select Colombo, Nugegoda, Dehiwala, Maharagama, or
-Battaramulla manually. When a location is available, the backend calculates the
-straight-line distance and returns pharmacies nearest-first. OpenStreetMap provides
-the interactive marker map and OSRM-powered route links; the displayed sorting distance
-is not road-travel distance. Without a location, search, map, Call, WhatsApp, and
-Directions still work without distance sorting.
-
-The pharmacy portal is available at `http://localhost:5173/login`. For the local
-demo, use `pharmacy@surgimap.lk` / `pharmacy123`, or choose **Fill demo
-credentials** on the sign-in screen. The API validates the credentials and issues
-an eight-hour signed pharmacy session; `/pharmacy/dashboard` redirects unsigned or
-expired sessions back to login. Set `SURGIMAP_PHARMACY_EMAIL`,
-`SURGIMAP_PHARMACY_PASSWORD`, and `SURGIMAP_AUTH_SECRET` in `backend/.env` before
-using the portal outside local development.
-
-## Tests
-
-```bash
-cd backend
 pytest -q
 
 cd ../frontend
-npm run build
 npm run lint
+npm run build
+```
+
+The submission-ready runbook is [ShadowStack.pdf](output/pdf/ShadowStack.pdf), the 7–10 minute presentation flow is [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md), and final human checks are in [docs/SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md).
+
+## Repository structure
+
+```text
+SurgiMap-Repo/
+├── backend/
+│   ├── app/              # FastAPI app, routers, models, services
+│   ├── data/             # 10 simulated pharmacy SQLite sources
+│   ├── scripts/          # build, sync, freshness, and stock demo tools
+│   └── tests/            # API, auth, catalog, and sync tests
+├── frontend/             # React + TypeScript patient and pharmacy UI
+├── docs/                 # demo script and submission checklist
+├── output/pdf/           # final software-instructions PDF
+├── compose.yaml          # optional PostgreSQL service
+├── start.sh              # one-command local launcher
+└── README.md
 ```

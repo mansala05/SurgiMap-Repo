@@ -39,6 +39,13 @@ export type PharmacySession = PharmacyProfile & {
   expires_in: number;
 };
 
+export type PharmacyInventoryItem = {
+  kit_name: string;
+  quantity: number;
+  status: string;
+  last_updated: string;
+};
+
 type SearchStockOptions = {
   signal?: AbortSignal;
   location?: UserLocation | null;
@@ -103,4 +110,18 @@ export async function getPharmacyProfile(
   });
   if (!response.ok) throw new Error('Your pharmacy session has expired. Please sign in again.');
   return response.json() as Promise<PharmacyProfile>;
+}
+
+export async function getPharmacyInventory(
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<PharmacyInventoryItem[]> {
+  const response = await fetch(new URL('/auth/pharmacy/inventory', API_BASE_URL), {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    signal,
+  });
+  if (!response.ok) {
+    throw new Error('Could not load the pharmacy inventory. Please sign in again.');
+  }
+  return response.json() as Promise<PharmacyInventoryItem[]>;
 }

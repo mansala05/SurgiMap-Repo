@@ -1,99 +1,86 @@
-# SurgiMap Demo Walkthrough Script
+# SurgiMap — 8-Minute Demo Script
 
-## 1. Introduction
+**Team Shadow Stack · HackElite 3.0 Phase 2**
 
-Hello, we are Team Shadow Stack, and our project is SurgiMap.
+## 0:00–0:45 — Problem and outcome
 
-SurgiMap is a healthcare prototype designed to help patients and relatives quickly find nearby pharmacies that have urgent surgical kits available.
+Hello, we are Team Shadow Stack, and this is SurgiMap.
 
-During medical emergencies, families often have to call or physically visit many pharmacies to check whether a required surgical kit is available. This wastes time and increases stress. SurgiMap tries to reduce this problem by giving users one simple search platform.
+When a patient urgently needs a surgical kit, relatives may have to call or visit several pharmacies before finding stock. SurgiMap turns that stressful manual search into one location-aware search across connected pharmacy inventories.
 
-## 2. Solution Overview
+This is a working software-only MVP. It shows where a kit is Available or Low Stock, how recently each pharmacy synced, and gives the user Call, WhatsApp, map, and directions actions. Because stock changes quickly, the interface always recommends verifying by phone before travelling.
 
-Our system allows a user to search for a surgical kit name. Then the platform shows nearby pharmacies where that kit is either Available or Low Stock.
+## 0:45–1:35 — Architecture
 
-Each result shows the pharmacy name, address, distance, last updated time, availability status, and contact options such as Call, WhatsApp, and Map.
+The demo has ten independent SQLite databases representing ten pharmacy inventory systems. Each contains 59 kits and surgical items, for 590 source records in total.
 
-For this hackathon MVP, we simulate pharmacy inventory systems using 10 dummy SQLite databases. A Python Local Sync Agent reads those pharmacy databases, normalizes item names using a master catalog, and sends the inventory data to a FastAPI backend.
+A Python local sync agent polls all ten sources every 30 seconds. It tolerates one unavailable pharmacy, normalizes different local names through a 396-alias master catalog, and sends a protected batch to FastAPI.
 
-The React frontend then allows users to search this centralized inventory data.
+The backend validates the batch again, derives the official name and stock status itself, and stores unified inventory centrally. PostgreSQL is supported for the proposed architecture; SQLite is the zero-setup judging fallback. A React and TypeScript web app then serves patient search and an authenticated, read-only pharmacy inventory monitor.
 
-## 3. Architecture Explanation
+## 1:35–2:10 — Start and health check
 
-Our architecture has five main parts.
+From the project root, we run `./start.sh`. One command starts FastAPI, the React frontend, and the automatic sync agent.
 
-First, we have 10 dummy SQLite pharmacy databases. These represent independent pharmacy inventory systems.
+The terminal confirms the API on port 8000, the frontend on port 5173, and a 30-second inventory interval. We open `/health` to show that the API is running and the central database connection is healthy. We can also open `/docs` to show the generated API contract.
 
-Second, we have the Python Local Sync Agent. It reads the pharmacy stock data, converts different local item names into standard surgical kit names, calculates the stock status, and sends the data to the backend.
+## 2:10–4:10 — Patient search flow
 
-The sync channel is protected by a shared API key. The backend also recalculates the canonical kit name and availability status, rejects duplicate batch items, and does not expose a public stock-update endpoint.
+We open the SurgiMap home page and search for `caesarean`. The term is an alias, so the master catalog resolves it to the full Maternity and Cesarean Section Delivery Kit.
 
-Third, we have the FastAPI backend. It receives the synced inventory data, records searches, filters out zero stock, and provides the search API.
+The browser can use our current location, or we can select a demo area. With a location, the backend calculates distance and returns the nearest matching pharmacies first. Without location permission, the core search still works.
 
-Fourth, we have the central database. PostgreSQL is used for the proposal-aligned setup, while SQLite remains available as a zero-setup fallback for the local demo.
+The page returns only pharmacies with stock. Exact quantities are intentionally hidden from patients; each result shows Available or Low Stock, contact details, distance where available, and a sync health label. “Live” means the pharmacy was received within the expected sync window. A delayed or offline label tells the user that verification is especially important.
 
-Fifth, we have the React frontend. This is the user-facing interface where patients or relatives can search for surgical kits, view results on a map, and contact pharmacies.
+Open the map to show the same live results as markers. Then return to a result card and show Call, WhatsApp, and directions. These are working links generated from each pharmacy’s data.
 
-## 4. Live Demo Flow
+Next, search with the short code `CSK`, a spelling variation such as `cesareen`, and an individual item such as `trocar 10mm`. This demonstrates alias, typo, short-code, and partial-item matching. A bad query shows useful suggestions instead of a blank dead end.
 
-Now we will show the working demo.
+## 4:10–5:25 — Automatic stock update
 
-First, we start the FastAPI backend.
+Now we prove that the inventory is not hard-coded in the browser.
 
-The project launcher also starts the Python Sync Agent in automatic mode. It syncs immediately, then checks all 10 pharmacy databases every 30 seconds and sends 590 inventory records to the backend.
+In another terminal, from `backend`, we run:
 
-The agent automatically includes the secure sync key configured in `backend/.env`; this key is never sent to the patient-facing browser.
+```bash
+source .venv/bin/activate
+python -m scripts.update_demo_stock \
+  --pharmacy 1 \
+  --item "Laparoscopic / Abdominal Surgery Kit" \
+  --quantity 2
+```
 
-Now we open the React frontend.
+We do not run a manual sync. The existing agent detects the source change on its next 30-second cycle. Search for the Laparoscopic / Abdominal Surgery Kit and watch the result refresh automatically. Pharmacy 1 moves to Low Stock, and the freshness label changes to a new successful sync time.
 
-Let us search for “caesarean”.
+This also demonstrates why different concepts are separated: source quantity is the business data, while last sync time tells us whether the connector is healthy.
 
-The browser asks for location permission. When we allow it, the backend calculates straight-line distance and returns the nearest matching pharmacies first. We can also refresh the current location or select a nearby area manually. If location is unavailable, the core search still works using stock-level ordering.
+## 5:25–6:15 — Pharmacy monitor
 
-The system shows only pharmacies where the Maternity & Cesarean Section Delivery Kit is Available or Low Stock. Pharmacies where the item is Not Available are hidden from the user.
+Open `/login` and use the demo credentials from the README. The API checks the credentials and creates a signed, expiring pharmacy session.
 
-Each pharmacy card shows the availability badge, address, distance, last updated time, and contact buttons.
+The pharmacy monitor reads the signed-in pharmacy’s real inventory from the central database. Its Available, Low Stock, and Unavailable totals come from synced rows, and it refreshes every 30 seconds. It is intentionally read-only: pharmacy staff change stock in their existing source system, and SurgiMap receives it through the same auditable sync path rather than creating a second source of truth.
 
-The interface intentionally shows the simple Available or Low Stock status instead of exposing complex inventory quantities. If an update is older than one hour, SurgiMap warns the user to call before travelling.
+## 6:15–7:15 — Reliability and technical depth
 
-The user can call the pharmacy, contact through WhatsApp, view all results on the embedded OpenStreetMap, or open an OpenStreetMap route before travelling. The result order uses straight-line distance for a fast and predictable search; the map route service handles the actual road route.
+There are four important engineering decisions behind the demo.
 
-## 5. Master Catalog Feature
+First, canonical normalization makes independently named inventory searchable as one catalog. Second, the backend never trusts the browser or agent-provided status; it validates and recalculates stock state. Third, batch updates are transactional, duplicate entries are rejected, and a failed batch rolls back. Fourth, one missing pharmacy file is reported and skipped without stopping the other nine sources.
 
-Different pharmacies may use different names for the same surgical kit. For example, one pharmacy may call it “C Section Kit”, while another may call it “Cesarean Kit”.
+The sync endpoint is protected with a server-side API key. Patient users have no public stock mutation route. The pharmacy monitor uses signed eight-hour sessions, and all secrets can be replaced through environment variables.
 
-Our master catalog maps these different local names into one standard name: “Maternity & Cesarean Section (C-Section) Delivery Kit”. The catalog covers six main procedure-kit categories and 53 individual surgical items.
+## 7:15–8:00 — Scope, impact, and close
 
-This makes the search more reliable and user-friendly. The search also understands partial phrases such as “c section”, spelling variations, extra spaces, and short catalog codes such as “CSK”. If no stocked item matches, the interface offers the closest searchable kit names.
+This phase fully delivers the proposed discovery loop: independent pharmacy sources, automatic normalization and sync, central search, live freshness, location-aware results, map, contact actions, and a connected pharmacy monitor.
 
-## 6. Sync Update Demonstration
+The current sources are simulated SQLite databases because real pharmacy POS access was unavailable during the hackathon. PostgreSQL support and clean API boundaries show how those adapters can be replaced. Reservations, payments, delivery, and clinical recommendations are deliberately outside this MVP.
 
-Now we demonstrate the sync behavior.
+SurgiMap reduces the number of calls and trips families make while keeping the final safety check with the pharmacy. Thank you.
 
-We update the stock quantity of one item in a local pharmacy database.
+## Recording checklist
 
-The running Sync Agent detects the latest database state on its next scheduled sync, and the backend receives the updated inventory data automatically.
-
-When we search again in the frontend, the result list changes according to the updated stock status.
-
-This shows how the system can simulate pharmacy inventory updates through the sync agent.
-
-## 7. Impact
-
-SurgiMap can reduce the time and stress involved in finding urgent surgical kits.
-
-Instead of calling many pharmacies one by one, users can search once, find possible pharmacies, and verify availability before travelling.
-
-This can support faster decision-making during medical emergencies.
-
-## 8. Future Improvements
-
-In the future, this prototype can be improved by connecting real pharmacy inventory systems using safe read-only access.
-
-We can also add secure role-based pharmacy/admin authentication, pharmacy dashboards, more medical items, demand analytics, and real read-only pharmacy connectors. Those operational portals are intentionally kept outside this patient-search MVP so the demo does not present mock login behavior as a finished security feature.
-
-## 9. Closing
-
-SurgiMap is not just a pharmacy listing website. It demonstrates a practical inventory-sync approach for emergency healthcare supply discovery.
-
-Thank you.
+- Keep the final video between 7 and 10 minutes.
+- Show the running product for most of the video; do not rely only on slides.
+- Keep the terminal text large enough to read.
+- Demonstrate one automatic update without manually running the sync agent.
+- Do not show real `.env` values, tokens, or personal accounts.
+- End with the repository link and place the public YouTube URL in `README.md`.

@@ -11,8 +11,10 @@ import time
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException
+from sqlalchemy.orm import Session
 
-from app import schemas
+from app import models, schemas
+from app.database import get_db
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -104,3 +106,31 @@ def pharmacy_me(session: dict[str, object] = Depends(require_pharmacy_session)):
         pharmacy_name=str(session["pharmacy_name"]),
         email=str(session["email"]),
     )
+
+
+@router.get(
+    "/pharmacy/inventory",
+    response_model=list[schemas.PharmacyInventoryItem],
+)
+def pharmacy_inventory(
+    session: dict[str, object] = Depends(require_pharmacy_session),
+    db: Session = Depends(get_db),
+):
+    """Return the signed-in pharmacy's inventory from the central sync store."""
+    pharmacy_id = int(session["pharmacy_id"])
+    rows = (
+        db.query(models.Stock)
+        .join(models.SurgicalKit)
+        .filter(models.Stock.pharmacy_id == pharmacy_id)
+        .order_by(models.SurgicalKit.standard_name)
+        .all()
+    )
+    return [
+        schemas.PharmacyInventoryItem(
+            kit_name=row.kit.standard_name,
+            quantity=row.quantity,
+            status=row.status,
+            last_updated=row.last_updated,
+        )
+        for row in rows
+    ]

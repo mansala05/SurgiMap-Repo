@@ -58,7 +58,7 @@ export function Login() {
             <div className="mb-8">
               <p className="text-xs font-black uppercase tracking-[0.24em] text-steelBlue mb-3">Staff access</p>
               <h1 className="text-3xl font-black tracking-tighter text-obsidian mb-2">Pharmacy portal</h1>
-              <p className="text-steelBlue text-sm font-medium">Sign in to manage inventory and stock updates.</p>
+              <p className="text-steelBlue text-sm font-medium">Sign in to monitor synced pharmacy inventory.</p>
             </div>
 
             {state?.message && (

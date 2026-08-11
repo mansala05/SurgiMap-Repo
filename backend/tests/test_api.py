@@ -232,6 +232,24 @@ def test_pharmacy_login_and_session_validation():
             "email": "pharmacy@surgimap.lk",
         }
 
+        inventory_response = client.get(
+            "/auth/pharmacy/inventory",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert inventory_response.status_code == 200
+        inventory = inventory_response.json()
+        c_section_item = next(
+            item for item in inventory if item["kit_name"] == (
+                "Maternity & Cesarean Section (C-Section) Delivery Kit"
+            )
+        )
+        assert c_section_item["kit_name"] == (
+            "Maternity & Cesarean Section (C-Section) Delivery Kit"
+        )
+        assert c_section_item["quantity"] == 5
+        assert c_section_item["status"] == "Available"
+        assert "last_updated" in c_section_item
+
         tampered_token = f"{token[:-1]}{'a' if token[-1] != 'a' else 'b'}"
         assert client.get(
             "/auth/pharmacy/me",

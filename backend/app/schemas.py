@@ -57,6 +57,13 @@ class PharmacySessionResponse(PharmacyProfileResponse):
     expires_in: int
 
 
+class PharmacyInventoryItem(BaseModel):
+    kit_name: str
+    quantity: int
+    status: str
+    last_updated: datetime
+
+
 class InventorySyncItem(BaseModel):
     pharmacy_id: int = Field(gt=0)
     local_item_name: str = Field(min_length=1)
