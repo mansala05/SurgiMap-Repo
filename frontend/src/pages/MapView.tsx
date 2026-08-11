@@ -12,7 +12,11 @@ import {
 import { OpenStreetResultsMap } from '../components/OpenStreetResultsMap';
 import { searchStock, type StockResult } from '../lib/api';
 import { resolveUserLocation, type LocationStatus, type UserLocation } from '../lib/location';
-import { formatStockAge, formatStockTimestamp, isStockStale } from '../lib/stock';
+import {
+  formatStockTimestamp,
+  getSyncFreshness,
+  STOCK_REFRESH_INTERVAL_MS
+} from '../lib/stock';
 
 type MappedStockResult = StockResult & { latitude: number; longitude: number };
 type MapNavigationState = {
@@ -42,6 +46,12 @@ export function MapView() {
   const [error, setError] = useState('');
   const [userLocation, setUserLocation] = useState<UserLocation | null>(initialUserLocation);
   const [locationStatus, setLocationStatus] = useState<LocationStatus>(initialUserLocation ? 'ready' : 'requesting');
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!query) {
@@ -79,6 +89,27 @@ export function MapView() {
 
     return () => controller.abort();
   }, [query, initialResults.length]);
+
+  useEffect(() => {
+    if (!query) return;
+
+    const refreshResults = () => {
+      searchStock(query, { location: userLocation })
+        .then((data) => {
+          setResults(data);
+          setActiveId((current) => (
+            current !== null && data.some((item) => item.pharmacy_id === current)
+              ? current
+              : data[0]?.pharmacy_id ?? null
+          ));
+        })
+        .catch(() => {
+          // Keep the last usable map state while a background refresh retries.
+        });
+    };
+    const timer = window.setInterval(refreshResults, STOCK_REFRESH_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [query, userLocation]);
 
   const mappedResults = useMemo(
     () => results.filter(hasCoordinates),
@@ -161,6 +192,7 @@ export function MapView() {
             {results.map((pharmacy) => {
               const isActive = pharmacy.pharmacy_id === activeId;
               const colors = getStatusColors(pharmacy.status);
+              const freshness = getSyncFreshness(pharmacy.last_updated, now);
               const markerNumber = markerNumberByPharmacyId.get(pharmacy.pharmacy_id);
               return (
                 <div
@@ -183,8 +215,8 @@ export function MapView() {
                   </div>
                   <div className={`space-y-2 text-[10px] font-bold uppercase tracking-widest ${isActive ? 'text-white/70' : 'text-steelBlue/70'}`}>
                     <p className="flex items-center gap-2"><MapPinIcon className="w-3 h-3" />{pharmacy.address}{pharmacy.distance_km !== null ? ` · ${pharmacy.distance_km.toFixed(1)} km` : ''}</p>
-                    <p className="flex items-center gap-2" title={`Last synced ${formatStockTimestamp(pharmacy.last_updated)}`}><ClockIcon className="w-3 h-3" />Updated {formatStockAge(pharmacy.last_updated)}</p>
-                    {isStockStale(pharmacy.last_updated) && <p className={isActive ? 'text-amber-200' : 'text-amber-700'}>Call to verify this older update</p>}
+                    <p className="flex items-center gap-2" title={`Last successful sync: ${formatStockTimestamp(pharmacy.last_updated)}`}><ClockIcon className="w-3 h-3" />{freshness.label}</p>
+                    {freshness.state !== 'live' && <p className={isActive ? 'text-amber-200' : freshness.state === 'offline' ? 'text-red-700' : 'text-amber-700'}>{freshness.state === 'offline' ? 'Automatic sync offline — call to verify' : 'Sync delayed — call to verify'}</p>}
                   </div>
 
                   {isActive &&

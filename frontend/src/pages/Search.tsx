@@ -13,44 +13,42 @@ const KIT_PRESENTATION = [
     id: 1,
     name: 'Maternity & Cesarean Section (C-Section) Delivery Kit',
     category: 'Obstetrics',
-    image:
-      'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=800'
+    image: '/images/kits/maternity-c-section-kit.jpg'
   },
   {
     id: 2,
     name: 'Laparoscopic / Abdominal Surgery Kit',
     category: 'Laparoscopy',
-    image:
-      'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&q=80&w=800'
+    image: '/images/kits/laparoscopic-abdominal-kit.jpg'
   },
   {
     id: 3,
     name: 'Orthopedic & Major Joint Surgery Prep Kit',
     category: 'Orthopedics',
-    image:
-      'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=800'
+    image: '/images/kits/orthopedic-joint-prep-kit.jpg'
   },
   {
     id: 4,
     name: 'Minor Surgical & Suture Removal Kit',
     category: 'Minor Surgery',
-    image:
-      'https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&q=80&w=800'
+    image: '/images/kits/minor-surgery-suture-removal-kit.jpg'
   },
   {
     id: 5,
     name: 'Cataract & Eye Surgery Kit',
     category: 'Ophthalmology',
-    image:
-      'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&q=80&w=800'
+    image: '/images/kits/cataract-eye-surgery-kit.jpg'
   },
   {
     id: 6,
     name: 'Wound Care & Post-Operative Dressing Kit',
     category: 'Wound Care',
-    image:
-      'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=800'
+    image: '/images/kits/wound-care-dressing-kit.jpg'
   }];
+
+const KIT_PRESENTATION_BY_NAME = new Map(
+  KIT_PRESENTATION.map((kit) => [kit.name, kit])
+);
 
 export function Search() {
   const location = useLocation();
@@ -65,11 +63,17 @@ export function Search() {
     getCatalog(controller.signal)
       .then((catalog) => {
         setCatalogTotal(catalog.total);
-        setQuickKits(catalog.primary_kits.map((name, index) => ({
-          ...(KIT_PRESENTATION[index] || KIT_PRESENTATION[0]),
-          id: index + 1,
-          name
-        })));
+        setQuickKits(catalog.primary_kits.map((name, index) => {
+          const presentation = KIT_PRESENTATION_BY_NAME.get(name)
+            || KIT_PRESENTATION[index]
+            || KIT_PRESENTATION[0];
+
+          return {
+            ...presentation,
+            id: index + 1,
+            name
+          };
+        }));
       })
       .catch(() => {
         // The built-in primary kit cards remain available while the API starts.

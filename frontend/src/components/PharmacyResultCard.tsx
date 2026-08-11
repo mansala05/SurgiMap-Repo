@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import {
   ClockIcon,
   MapPinIcon,
@@ -13,9 +14,8 @@ import {
   PHARMACY_IMAGE_FALLBACK
 } from '../lib/pharmacyPresentation';
 import {
-  formatStockAge,
   formatStockTimestamp,
-  isStockStale
+  getSyncFreshness
 } from '../lib/stock';
 
 type PharmacyResultCardProps = {
@@ -34,8 +34,19 @@ function directionsUrl(pharmacy: StockResult, userLocation: UserLocation | null)
 }
 
 export function PharmacyResultCard({ pharmacy, userLocation }: PharmacyResultCardProps) {
-  const stale = isStockStale(pharmacy.last_updated);
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const freshness = getSyncFreshness(pharmacy.last_updated, now);
   const exactUpdateTime = formatStockTimestamp(pharmacy.last_updated);
+  const freshnessColor = freshness.state === 'live'
+    ? 'text-green-600'
+    : freshness.state === 'delayed'
+      ? 'text-amber-600'
+      : 'text-red-600';
 
   return (
     <article className="bg-white border border-silverMist rounded-[2rem] overflow-hidden shadow-xl shadow-arcticNavy/5 hover:shadow-2xl hover:shadow-arcticNavy/10 transition-all duration-300 group">
@@ -80,15 +91,17 @@ export function PharmacyResultCard({ pharmacy, userLocation }: PharmacyResultCar
                 {pharmacy.distance_km !== null ? ` · ${pharmacy.distance_km.toFixed(1)} km away` : ''}
               </p>
             </div>
-            <div className="flex items-center gap-3" title={`Last synced ${exactUpdateTime}`}>
-              <ClockIcon className={`w-5 h-5 shrink-0 ${stale ? 'text-amber-600' : 'text-green-600'}`} />
-              <p className={`text-xs font-black uppercase tracking-widest ${stale ? 'text-amber-700' : 'text-steelBlue'}`}>
-                Updated {formatStockAge(pharmacy.last_updated)}
+            <div className="flex items-center gap-3" title={`Last successful sync: ${exactUpdateTime}`}>
+              <ClockIcon className={`w-5 h-5 shrink-0 ${freshnessColor}`} />
+              <p className={`text-xs font-black uppercase tracking-widest ${freshnessColor}`}>
+                {freshness.label}
               </p>
             </div>
-            {stale &&
-              <p className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                Older inventory update — call to confirm before travelling.
+            {freshness.state !== 'live' &&
+              <p className={`text-xs font-bold rounded-lg px-3 py-2 border ${freshness.state === 'delayed' ? 'text-amber-700 bg-amber-50 border-amber-200' : 'text-red-700 bg-red-50 border-red-200'}`}>
+                {freshness.state === 'delayed'
+                  ? 'The pharmacy missed recent sync cycles. Call to confirm before travelling.'
+                  : 'Automatic stock sync appears offline. Call the pharmacy to verify availability.'}
               </p>
             }
           </div>

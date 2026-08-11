@@ -50,8 +50,16 @@ def read_pharmacy_inventory(pharmacy_id: int):
 
 def build_sync_payload() -> list[dict[str, object]]:
     payload: list[dict[str, object]] = []
+    failed_pharmacies: list[int] = []
     for pharmacy_id in range(1, TOTAL_PHARMACIES + 1):
-        for local_name, quantity, updated_at in read_pharmacy_inventory(pharmacy_id):
+        try:
+            inventory = read_pharmacy_inventory(pharmacy_id)
+        except (FileNotFoundError, sqlite3.Error) as error:
+            failed_pharmacies.append(pharmacy_id)
+            print(f"Pharmacy {pharmacy_id:02d} unavailable: {error}")
+            continue
+
+        for local_name, quantity, updated_at in inventory:
             payload.append(
                 {
                     "pharmacy_id": pharmacy_id,
@@ -62,6 +70,9 @@ def build_sync_payload() -> list[dict[str, object]]:
                     "last_updated": updated_at,
                 }
             )
+    if failed_pharmacies:
+        pharmacy_list = ", ".join(f"{item:02d}" for item in failed_pharmacies)
+        print(f"Continuing without pharmacy database(s): {pharmacy_list}")
     return payload
 
 
@@ -86,6 +97,8 @@ def send_payload(payload: list[dict[str, object]]) -> None:
 
 def sync_once(*, prepare_only: bool = False) -> None:
     payload = build_sync_payload()
+    if not payload:
+        raise RuntimeError("No pharmacy databases were available to sync")
     OUTPUT_FILE.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     print(f"Prepared {len(payload)} records and saved {OUTPUT_FILE.name}.")
     if not prepare_only:

@@ -14,6 +14,7 @@ import {
   'lucide-react';
 import { PharmacyResultCard } from '../components/PharmacyResultCard';
 import { searchStock, suggestKits, type StockResult } from '../lib/api';
+import { STOCK_REFRESH_INTERVAL_MS } from '../lib/stock';
 import {
   AREA_LOCATIONS,
   requestCurrentLocation,
@@ -144,6 +145,20 @@ export function Home() {
 
     return () => controller.abort();
   }, [locationRefresh, query]);
+
+  useEffect(() => {
+    if (!query) return;
+
+    const refreshResults = () => {
+      searchStock(query, { location: userLocation })
+        .then(setResults)
+        .catch(() => {
+          // Keep the last usable results while a background refresh retries.
+        });
+    };
+    const timer = window.setInterval(refreshResults, STOCK_REFRESH_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [query, userLocation]);
 
   const handleUseCurrentLocation = async () => {
     setLocationStatus('requesting');
