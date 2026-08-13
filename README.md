@@ -11,7 +11,7 @@ SurgiMap helps patients and relatives find nearby pharmacies with urgent surgica
 - Web app after local start: <http://localhost:5173>
 - API documentation: <http://127.0.0.1:8000/docs>
 - Public repository: <https://github.com/mansala05/SurgiMap-Repo>
-- Demo video: **PENDING — replace this line with the final 7–10 minute public YouTube link before submission**
+- Demo video:https://youtu.be/QHgVebhWjoM
 
 ## Quick start
 
