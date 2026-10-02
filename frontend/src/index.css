@@ -16,3 +16,14 @@
   background-size: 200% 200%;
   animation: gradient-x 3s ease infinite;
 }
+
+@keyframes surgical-kit-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-16px); }
+}
+.surgical-kit-float {
+  animation: surgical-kit-float 4.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .surgical-kit-float { animation: none; }
+}
