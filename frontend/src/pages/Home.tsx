@@ -12,6 +12,7 @@ import {
   PhoneIcon
 } from
   'lucide-react';
+import { SurgicalKitScene } from '../components/SurgicalKitScene';
 import { PharmacyResultCard } from '../components/PharmacyResultCard';
 import { searchStock, suggestKits, type StockResult } from '../lib/api';
 import { STOCK_REFRESH_INTERVAL_MS } from '../lib/stock';
@@ -420,9 +421,10 @@ export function Home() {
       {/* Hero Section */}
       <main className="max-w-[1440px] mx-auto px-8 md:px-16 pt-12 pb-32 relative">
         <div className="relative z-10">
-          {/* Headline - Now with Arrow Right in front */}
-          <div className="max-w-5xl mb-16">
-            <h1 className="text-6xl md:text-[84px] font-black leading-[0.9] tracking-tighter text-obsidian flex flex-wrap items-center gap-x-6">
+          {/* Hero copy and interactive surgical kit illustration */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] items-center gap-8 lg:gap-10 mb-16">
+          <div className="min-w-0">
+            <h1 className="text-5xl sm:text-6xl md:text-[84px] lg:text-[60px] xl:text-[84px] font-black leading-[0.9] tracking-tighter text-obsidian">
               Find the right
               <br />
               surgical supplies
@@ -449,7 +451,12 @@ export function Home() {
             </button>
           </div>
 
-          {/* Bottom Cards - Uniform Size, No large focal image on right */}
+          <div className="flex min-w-0 items-center justify-center lg:justify-end">
+              <SurgicalKitScene />
+            </div>
+          </div>
+
+          {/* Supporting cards */}
           <div className="flex flex-wrap gap-8 items-start">
             <div className="w-60 h-80 rounded-[2.5rem] overflow-hidden shadow-xl border border-silverMist hover:-translate-y-4 hover:shadow-2xl transition-all duration-300 cursor-pointer">
               <img
