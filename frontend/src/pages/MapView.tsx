@@ -1,3 +1,4 @@
+import { directionsUrl } from '../lib/maps';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -9,7 +10,7 @@ import {
   PhoneIcon,
   SearchIcon
 } from 'lucide-react';
-import { OpenStreetResultsMap } from '../components/OpenStreetResultsMap';
+import { GoogleResultsMap } from '../components/GoogleResultsMap';
 import { searchStock, type StockResult } from '../lib/api';
 import { resolveUserLocation, type LocationStatus, type UserLocation } from '../lib/location';
 import {
@@ -180,7 +181,7 @@ export function MapView() {
 
         <div className="flex flex-col lg:flex-row gap-8 min-h-[620px]">
           <section className="flex-[1.8] min-h-[520px] rounded-[2.5rem] overflow-hidden border border-silverMist shadow-2xl relative z-0">
-            <OpenStreetResultsMap
+            <GoogleResultsMap
               results={mappedResults}
               activeId={activeId}
               userLocation={userLocation}
@@ -228,9 +229,7 @@ export function MapView() {
                         ? <a href={`https://wa.me/${pharmacy.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()} className="flex items-center justify-center gap-1 bg-[#25D366] text-white py-2 rounded-lg text-[10px] font-black"><MessageCircleIcon className="w-3 h-3" />Chat</a>
                         : <span />}
                       <a
-                        href={userLocation
-                          ? `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${userLocation.latitude}%2C${userLocation.longitude}%3B${pharmacy.latitude}%2C${pharmacy.longitude}`
-                          : `https://www.openstreetmap.org/?mlat=${pharmacy.latitude}&mlon=${pharmacy.longitude}#map=16/${pharmacy.latitude}/${pharmacy.longitude}`}
+                        href={directionsUrl(pharmacy, userLocation)}
                         target="_blank"
                         rel="noreferrer"
                         onClick={(event) => event.stopPropagation()}

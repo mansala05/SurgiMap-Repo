@@ -15,23 +15,20 @@ SurgiMap helps patients and relatives find nearby pharmacies with urgent surgica
 
 ## Quick start
 
-Prerequisites: Python 3.11+, Node.js 20+, and npm. Docker is optional.
+Prerequisites: Python 3.11–3.13 (3.12 recommended), Node.js 20+, and npm. Docker is optional.
 
 ```bash
 git clone https://github.com/mansala05/SurgiMap-Repo.git
 cd SurgiMap-Repo
 
-cd backend
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-cd ../frontend
+cd frontend
 npm install
 
 cd ..
 ./start.sh
 ```
+
+The launcher selects a supported Python, preserves incompatible virtual environments, and installs backend dependencies automatically. Set `SURGIMAP_PYTHON=/path/to/python3.12` to choose an interpreter. It waits for API health before starting the frontend and sync agent.
 
 Open <http://localhost:5173>. The launcher starts the API, React app, and inventory agent; it syncs immediately and every 30 seconds. Press `Ctrl+C` once to stop all three processes.
 
@@ -71,8 +68,8 @@ Each pharmacy database represents an independent inventory system. The agent tol
 
 | Layer | Technology | Purpose |
 |---|---|---|
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS | Responsive search and pharmacy-monitor interfaces |
-| Maps | Leaflet, OpenStreetMap, OSRM links | Result markers and external directions without a browser API key |
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS | Responsive search and pharmacy-monitor interfaces |
+| Maps | Google Maps JavaScript API and Google Maps URLs | Interactive result markers with a browser API key; embedded selected-location map without one |
 | API | FastAPI, Pydantic | Typed REST endpoints, validation, auth, and OpenAPI docs |
 | Data | SQLAlchemy, PostgreSQL / SQLite | Portable central inventory store |
 | Integration | Python, SQLite, 30-second polling agent | Simulated multi-pharmacy inventory ingestion |
@@ -85,7 +82,7 @@ Each pharmacy database represents an independent inventory system. The agent tol
 - Return only stocked pharmacies and label results as **Available** or **Low Stock**.
 - Sort matching items predictably and, when location is supplied, place nearest pharmacies first.
 - Show per-pharmacy sync state as **Live**, **Delayed**, or **Offline**, refreshing every 30 seconds.
-- Open Call, WhatsApp, interactive OpenStreetMap, and directions actions from results.
+- Open Call, WhatsApp, Google Maps, and directions actions from results.
 - Protect inventory ingestion with an API key, revalidate data server-side, reject duplicate batch items, and roll back failed batches.
 - Protect the pharmacy monitor with signed, expiring sessions; the monitor displays real central inventory and cannot bypass the source-of-truth sync flow.
 
@@ -128,7 +125,7 @@ docker compose up -d postgres
 cp backend/.env.example backend/.env
 ```
 
-Copy `frontend/.env.example` when the API is hosted at another URL. Production deployment should use managed PostgreSQL, HTTPS, restricted CORS origins, long random sync/auth secrets, and a supervised sync-agent process at each pharmacy. No production URL is claimed for this submission; the fully working local deployment is the evaluated path.
+Copy `frontend/.env.example` to `frontend/.env` when the API is hosted at another URL or to configure Google Maps. For selectable markers for all pharmacies, set `VITE_GOOGLE_MAPS_API_KEY` to a browser key with Maps JavaScript API and billing enabled, and restrict it to your frontend origins. Optionally set `VITE_GOOGLE_MAPS_MAP_ID` for production. Restart Vite after changing these values. Without a key, the map embeds the selected pharmacy and Google Maps directions still work. Production deployment should use managed PostgreSQL, HTTPS, restricted CORS origins, long random sync/auth secrets, and a supervised sync-agent process at each pharmacy. No production URL is claimed for this submission; the fully working local deployment is the evaluated path.
 
 ## Technical challenges and creative solutions
 
@@ -147,7 +144,7 @@ Copy `frontend/.env.example` when the API is hosted at another URL. Production d
 - Ten independent simulated pharmacy inventory databases with varied quantities, aliases, and timestamps.
 - Automatic 30-second synchronization into a central database.
 - Alias-aware catalog search, typo suggestions, availability filtering, optional location sorting, and search logging.
-- Responsive patient UI with realistic kit imagery, freshness indicators, OpenStreetMap, Call, WhatsApp, and directions.
+- Responsive patient UI with realistic kit imagery, freshness indicators, Google Maps, Call, WhatsApp, and directions.
 - Authenticated read-only pharmacy inventory monitor backed by real central data.
 - SQLite zero-setup mode, optional PostgreSQL service, example environment files, automated tests, and API docs.
 
@@ -155,7 +152,7 @@ Copy `frontend/.env.example` when the API is hosted at another URL. Production d
 
 - **Pharmacy integration:** the agent reads ten SQLite sources for the MVP; adapters for real pharmacy POS/database products are future work.
 - **Authentication:** signed eight-hour demo sessions are implemented for one configured pharmacy account; multi-user administration, password recovery, and audit administration are outside this phase.
-- **Routing:** search distance uses a fast straight-line calculation; the directions action delegates the road route to OpenStreetMap/OSRM.
+- **Routing:** search distance uses a fast straight-line calculation; the directions action delegates the road route to Google Maps.
 
 ### Not implemented in this phase
 
@@ -169,7 +166,7 @@ The central store is PostgreSQL-ready through `compose.yaml`, but the submission
 
 ## Known limitations and judge notes
 
-- Internet access is needed for OpenStreetMap tiles and external route links; search, stock status, Call, and WhatsApp still work without map tiles.
+- Internet access is needed for Google Maps tiles and external route links; search, stock status, Call, and WhatsApp still work without map tiles.
 - Browser geolocation is optional. Denial falls back to stock/name ordering and manual demo locations.
 - Inventory is prototype data. Always verify by phone before travelling.
 - The generated SQLite database files are intentionally included so the MVP works immediately; generated dependencies and build folders are excluded.

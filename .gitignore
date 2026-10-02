@@ -20,3 +20,5 @@ backend/sync_payload.json
 
 # Environment files
 .env
+
+backend/.venv.backup.*/

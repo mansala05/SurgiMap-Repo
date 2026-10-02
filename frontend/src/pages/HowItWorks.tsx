@@ -45,7 +45,7 @@ const STEPS = [
   {
     tag: 'STEP 4',
     title: 'Find Nearby Pharmacies',
-    desc: 'Search any location to discover nearby pharmacies, view directions, and explore available healthcare services on OpenStreetMap.',
+    desc: 'Search any location to discover nearby pharmacies, view directions, and explore available healthcare services on Google Maps.',
     cta: 'View on Map',
     href: '/search',
     icon: <RefreshCwIcon className="w-7 h-7 text-arcticNavy" />,

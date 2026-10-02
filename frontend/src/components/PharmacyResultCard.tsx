@@ -1,3 +1,4 @@
+import { directionsUrl } from '../lib/maps';
 import { useEffect, useState } from 'react';
 import {
   ClockIcon,
@@ -22,16 +23,6 @@ type PharmacyResultCardProps = {
   pharmacy: StockResult;
   userLocation: UserLocation | null;
 };
-
-function directionsUrl(pharmacy: StockResult, userLocation: UserLocation | null): string {
-  if (pharmacy.latitude === null || pharmacy.longitude === null) {
-    return `https://www.openstreetmap.org/search?query=${encodeURIComponent(`${pharmacy.pharmacy_name} ${pharmacy.address}`)}`;
-  }
-  if (userLocation) {
-    return `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${userLocation.latitude}%2C${userLocation.longitude}%3B${pharmacy.latitude}%2C${pharmacy.longitude}`;
-  }
-  return `https://www.openstreetmap.org/?mlat=${pharmacy.latitude}&mlon=${pharmacy.longitude}#map=16/${pharmacy.latitude}/${pharmacy.longitude}`;
-}
 
 export function PharmacyResultCard({ pharmacy, userLocation }: PharmacyResultCardProps) {
   const [now, setNow] = useState(Date.now());
