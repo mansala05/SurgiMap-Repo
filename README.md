@@ -44,6 +44,8 @@ These credentials and signing secrets are local-demo defaults only. Replace ever
 
 ## Architecture and system overview
 
+SurgiMap uses three deployment tiers: the React presentation tier, the Python application tier, and the SQLite/PostgreSQL data tier. The backend separates HTTP adapters (`app/presentation/`), application rules (`app/business/`), and persistence (`app/data/`). See [the architecture guide](docs/ARCHITECTURE.md) for the folder map, request flow, and compatibility guarantees.
+
 ```mermaid
 flowchart TB
     P["10 simulated pharmacy SQLite databases"]
@@ -129,13 +131,13 @@ Copy `frontend/.env.example` to `frontend/.env` when the API is hosted at anothe
 
 ## Technical challenges and creative solutions
 
-1. **Inconsistent pharmacy item names.** A search for “C section”, “Cesarean Kit”, or `CSK` must resolve to one stock item. The [master catalog service](backend/app/services/master_catalog.py) combines deterministic normalization, aliases, partial matching, and typo-tolerant suggestions instead of relying on exact database text.
+1. **Inconsistent pharmacy item names.** A search for “C section”, “Cesarean Kit”, or `CSK` must resolve to one stock item. The [master catalog service](backend/app/business/master_catalog.py) combines deterministic normalization, aliases, partial matching, and typo-tolerant suggestions instead of relying on exact database text.
 
-2. **Freshness without misleading users.** Source-row edit time alone made a healthy sync agent look offline, while giving every result the same vague timestamp hid useful state. The [sync endpoint](backend/app/routers/sync.py) records successful receipt time, and the [frontend freshness model](frontend/src/lib/stock.ts) turns that into clear Live, Delayed, and Offline states refreshed every 30 seconds.
+2. **Freshness without misleading users.** Source-row edit time alone made a healthy sync agent look offline, while giving every result the same vague timestamp hid useful state. The [sync endpoint](backend/app/business/sync.py) records successful receipt time, and the [frontend freshness model](frontend/src/lib/stock.ts) turns that into clear Live, Delayed, and Offline states refreshed every 30 seconds.
 
 3. **A resilient multi-source demo.** One missing or corrupt pharmacy file should not stop nine healthy pharmacies from updating. The [local sync agent](backend/scripts/sync_agent.py) isolates source failures, reports skipped databases, retries API failures, and continues with every valid inventory record.
 
-4. **Safe stock ingestion in a public search product.** The browser must not be able to write stock or trust a client-provided status. The [inventory sync router](backend/app/routers/sync.py) uses a protected server-to-server channel, validates pharmacy IDs and batch size, recalculates canonical names/statuses, rejects duplicates, and uses transaction rollback on failure.
+4. **Safe stock ingestion in a public search product.** The browser must not be able to write stock or trust a client-provided status. The [inventory sync router](backend/app/business/sync.py) uses a protected server-to-server channel, validates pharmacy IDs and batch size, recalculates canonical names/statuses, rejects duplicates, and uses transaction rollback on failure.
 
 ## Scope delivered
 
@@ -191,7 +193,10 @@ The submission-ready runbook is [ShadowStack.pdf](output/pdf/ShadowStack.pdf), t
 ```text
 SurgiMap-Repo/
 ├── backend/
-│   ├── app/              # FastAPI app, routers, models, services
+│   ├── app/
+│   │   ├── presentation/ # HTTP routes, dependency wiring and API app
+│   │   ├── business/     # Search, auth, stock and sync use cases
+│   │   └── data/         # ORM models, repositories and sessions
 │   ├── data/             # 10 simulated pharmacy SQLite sources
 │   ├── scripts/          # build, sync, freshness, and stock demo tools
 │   └── tests/            # API, auth, catalog, and sync tests

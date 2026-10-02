@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import sqlite3
 
-from app.services.master_catalog import MASTER_CATALOG, STANDARD_NAMES, normalize_item_name
+from app.business.master_catalog import MASTER_CATALOG, STANDARD_NAMES, normalize_item_name
 from scripts.demo_config import TOTAL_PHARMACIES, demo_updated_at
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -81,10 +81,10 @@ def create_central_db() -> None:
 
     os.environ["DATABASE_URL"] = f"sqlite:///{CENTRAL_DB}"
 
-    from app import models
-    from app.database import Base, SessionLocal, engine
-    from app.routers.search import compute_status
-    from app.seed import seed_demo_pharmacies
+    from app.data import models
+    from app.data.database import Base, SessionLocal, engine
+    from app.business.stock import compute_status
+    from app.data.seed import seed_demo_pharmacies
 
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
