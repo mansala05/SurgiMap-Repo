@@ -19,6 +19,7 @@ import {
   AREA_LOCATIONS,
   requestCurrentLocation,
   resolveUserLocation,
+  getLocationMessage,
   setManualLocation,
   type LocationStatus,
   type UserLocation
@@ -103,6 +104,7 @@ export function Home() {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [locationStatus, setLocationStatus] = useState<LocationStatus>('requesting');
   const [locationRefresh, setLocationRefresh] = useState(0);
+  const [locationNotice, setLocationNotice] = useState('');
 
   useEffect(() => {
     setSearchInput(query);
@@ -124,6 +126,7 @@ export function Home() {
 
     resolveUserLocation()
       .then((locationResult) => {
+        if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError');
         setUserLocation(locationResult.location);
         setLocationStatus(locationResult.status);
         return searchStock(query, { signal: controller.signal, location: locationResult.location });
@@ -161,16 +164,19 @@ export function Home() {
   }, [query, userLocation]);
 
   const handleUseCurrentLocation = async () => {
+    setLocationNotice('');
     setLocationStatus('requesting');
     const locationResult = await requestCurrentLocation(true);
     setUserLocation(locationResult.location);
     setLocationStatus(locationResult.status);
+    setLocationNotice(locationResult.message || '');
     if (locationResult.location) setLocationRefresh((value) => value + 1);
   };
 
   const handleAreaChange = (areaLabel: string) => {
     const area = AREA_LOCATIONS.find((option) => option.label === areaLabel);
     if (!area) return;
+    setLocationNotice('');
     setManualLocation(area);
     setUserLocation(area);
     setLocationStatus('ready');
@@ -255,10 +261,14 @@ export function Home() {
                       ? 'Location permission denied'
                       : locationStatus === 'timeout'
                         ? 'Location request timed out'
-                        : 'Location unavailable'}
+                        : locationStatus === 'insecure'
+                          ? 'Current location needs a secure connection'
+                          : 'Location unavailable'}
               </p>
               <p className="text-xs text-steelBlue mt-0.5">
-                {locationStatus === 'ready' ? 'Results are sorted nearest first' : 'Choose an area or try current location again'}
+                {locationNotice || (locationStatus === 'ready'
+                  ? userLocation?.source === 'manual' ? 'Distances are measured from the selected area centre' : 'Results are sorted nearest first'
+                  : locationStatus === 'requesting' ? 'Checking your device location…' : getLocationMessage(locationStatus))}
               </p>
             </div>
           </div>
@@ -271,6 +281,7 @@ export function Home() {
               {locationStatus === 'requesting' ? 'Locating…' : userLocation?.source === 'current' ? 'Refresh location' : 'Use current location'}
             </button>
             <select
+              aria-label="Choose your area"
               value={userLocation?.source === 'manual' ? userLocation.label : ''}
               onChange={(event) => handleAreaChange(event.target.value)}
               className="px-4 py-2.5 rounded-xl border border-silverMist bg-white text-xs font-bold text-steelBlue focus:outline-none focus:border-arcticNavy">
