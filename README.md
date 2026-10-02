@@ -15,23 +15,20 @@ SurgiMap helps patients and relatives find nearby pharmacies with urgent surgica
 
 ## Quick start
 
-Prerequisites: Python 3.11+, Node.js 20+, and npm. Docker is optional.
+Prerequisites: Python 3.11–3.13 (3.12 recommended), Node.js 20+, and npm. Docker is optional.
 
 ```bash
 git clone https://github.com/mansala05/SurgiMap-Repo.git
 cd SurgiMap-Repo
 
-cd backend
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-cd ../frontend
+cd frontend
 npm install
 
 cd ..
 ./start.sh
 ```
+
+The launcher selects a supported Python, preserves incompatible virtual environments, and installs backend dependencies automatically. Set `SURGIMAP_PYTHON=/path/to/python3.12` to choose an interpreter. It waits for API health before starting the frontend and sync agent.
 
 Open <http://localhost:5173>. The launcher starts the API, React app, and inventory agent; it syncs immediately and every 30 seconds. Press `Ctrl+C` once to stop all three processes.
 
@@ -46,6 +43,8 @@ Windows users can run the three processes in separate terminals using the comman
 These credentials and signing secrets are local-demo defaults only. Replace every value in `backend/.env` for any shared deployment.
 
 ## Architecture and system overview
+
+SurgiMap uses three deployment tiers: the React presentation tier, the Python application tier, and the SQLite/PostgreSQL data tier. The backend separates HTTP adapters (`app/presentation/`), application rules (`app/business/`), and persistence (`app/data/`). See [the architecture guide](docs/ARCHITECTURE.md) for the folder map, request flow, and compatibility guarantees.
 
 ```mermaid
 flowchart TB
@@ -71,8 +70,8 @@ Each pharmacy database represents an independent inventory system. The agent tol
 
 | Layer | Technology | Purpose |
 |---|---|---|
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS | Responsive search and pharmacy-monitor interfaces |
-| Maps | Leaflet, OpenStreetMap, OSRM links | Result markers and external directions without a browser API key |
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS | Responsive search and pharmacy-monitor interfaces |
+| Maps | Google Maps JavaScript API and Google Maps URLs | Interactive result markers with a browser API key; embedded selected-location map without one |
 | API | FastAPI, Pydantic | Typed REST endpoints, validation, auth, and OpenAPI docs |
 | Data | SQLAlchemy, PostgreSQL / SQLite | Portable central inventory store |
 | Integration | Python, SQLite, 30-second polling agent | Simulated multi-pharmacy inventory ingestion |
@@ -85,7 +84,7 @@ Each pharmacy database represents an independent inventory system. The agent tol
 - Return only stocked pharmacies and label results as **Available** or **Low Stock**.
 - Sort matching items predictably and, when location is supplied, place nearest pharmacies first.
 - Show per-pharmacy sync state as **Live**, **Delayed**, or **Offline**, refreshing every 30 seconds.
-- Open Call, WhatsApp, interactive OpenStreetMap, and directions actions from results.
+- Open Call, WhatsApp, Google Maps, and directions actions from results.
 - Protect inventory ingestion with an API key, revalidate data server-side, reject duplicate batch items, and roll back failed batches.
 - Protect the pharmacy monitor with signed, expiring sessions; the monitor displays real central inventory and cannot bypass the source-of-truth sync flow.
 
@@ -128,17 +127,17 @@ docker compose up -d postgres
 cp backend/.env.example backend/.env
 ```
 
-Copy `frontend/.env.example` when the API is hosted at another URL. Production deployment should use managed PostgreSQL, HTTPS, restricted CORS origins, long random sync/auth secrets, and a supervised sync-agent process at each pharmacy. No production URL is claimed for this submission; the fully working local deployment is the evaluated path.
+Copy `frontend/.env.example` to `frontend/.env` when the API is hosted at another URL or to configure Google Maps. For selectable markers for all pharmacies, set `VITE_GOOGLE_MAPS_API_KEY` to a browser key with Maps JavaScript API and billing enabled, and restrict it to your frontend origins. Optionally set `VITE_GOOGLE_MAPS_MAP_ID` for production. Restart Vite after changing these values. Without a key, the map embeds the selected pharmacy and Google Maps directions still work. Production deployment should use managed PostgreSQL, HTTPS, restricted CORS origins, long random sync/auth secrets, and a supervised sync-agent process at each pharmacy. No production URL is claimed for this submission; the fully working local deployment is the evaluated path.
 
 ## Technical challenges and creative solutions
 
-1. **Inconsistent pharmacy item names.** A search for “C section”, “Cesarean Kit”, or `CSK` must resolve to one stock item. The [master catalog service](backend/app/services/master_catalog.py) combines deterministic normalization, aliases, partial matching, and typo-tolerant suggestions instead of relying on exact database text.
+1. **Inconsistent pharmacy item names.** A search for “C section”, “Cesarean Kit”, or `CSK` must resolve to one stock item. The [master catalog service](backend/app/business/master_catalog.py) combines deterministic normalization, aliases, partial matching, and typo-tolerant suggestions instead of relying on exact database text.
 
-2. **Freshness without misleading users.** Source-row edit time alone made a healthy sync agent look offline, while giving every result the same vague timestamp hid useful state. The [sync endpoint](backend/app/routers/sync.py) records successful receipt time, and the [frontend freshness model](frontend/src/lib/stock.ts) turns that into clear Live, Delayed, and Offline states refreshed every 30 seconds.
+2. **Freshness without misleading users.** Source-row edit time alone made a healthy sync agent look offline, while giving every result the same vague timestamp hid useful state. The [sync endpoint](backend/app/business/sync.py) records successful receipt time, and the [frontend freshness model](frontend/src/lib/stock.ts) turns that into clear Live, Delayed, and Offline states refreshed every 30 seconds.
 
 3. **A resilient multi-source demo.** One missing or corrupt pharmacy file should not stop nine healthy pharmacies from updating. The [local sync agent](backend/scripts/sync_agent.py) isolates source failures, reports skipped databases, retries API failures, and continues with every valid inventory record.
 
-4. **Safe stock ingestion in a public search product.** The browser must not be able to write stock or trust a client-provided status. The [inventory sync router](backend/app/routers/sync.py) uses a protected server-to-server channel, validates pharmacy IDs and batch size, recalculates canonical names/statuses, rejects duplicates, and uses transaction rollback on failure.
+4. **Safe stock ingestion in a public search product.** The browser must not be able to write stock or trust a client-provided status. The [inventory sync router](backend/app/business/sync.py) uses a protected server-to-server channel, validates pharmacy IDs and batch size, recalculates canonical names/statuses, rejects duplicates, and uses transaction rollback on failure.
 
 ## Scope delivered
 
@@ -147,7 +146,7 @@ Copy `frontend/.env.example` when the API is hosted at another URL. Production d
 - Ten independent simulated pharmacy inventory databases with varied quantities, aliases, and timestamps.
 - Automatic 30-second synchronization into a central database.
 - Alias-aware catalog search, typo suggestions, availability filtering, optional location sorting, and search logging.
-- Responsive patient UI with realistic kit imagery, freshness indicators, OpenStreetMap, Call, WhatsApp, and directions.
+- Responsive patient UI with realistic kit imagery, freshness indicators, Google Maps, Call, WhatsApp, and directions.
 - Authenticated read-only pharmacy inventory monitor backed by real central data.
 - SQLite zero-setup mode, optional PostgreSQL service, example environment files, automated tests, and API docs.
 
@@ -155,7 +154,7 @@ Copy `frontend/.env.example` when the API is hosted at another URL. Production d
 
 - **Pharmacy integration:** the agent reads ten SQLite sources for the MVP; adapters for real pharmacy POS/database products are future work.
 - **Authentication:** signed eight-hour demo sessions are implemented for one configured pharmacy account; multi-user administration, password recovery, and audit administration are outside this phase.
-- **Routing:** search distance uses a fast straight-line calculation; the directions action delegates the road route to OpenStreetMap/OSRM.
+- **Routing:** search distance uses a fast straight-line calculation; the directions action delegates the road route to Google Maps.
 
 ### Not implemented in this phase
 
@@ -169,7 +168,7 @@ The central store is PostgreSQL-ready through `compose.yaml`, but the submission
 
 ## Known limitations and judge notes
 
-- Internet access is needed for OpenStreetMap tiles and external route links; search, stock status, Call, and WhatsApp still work without map tiles.
+- Internet access is needed for Google Maps tiles and external route links; search, stock status, Call, and WhatsApp still work without map tiles.
 - Browser geolocation is optional. Denial falls back to stock/name ordering and manual demo locations.
 - Inventory is prototype data. Always verify by phone before travelling.
 - The generated SQLite database files are intentionally included so the MVP works immediately; generated dependencies and build folders are excluded.
@@ -194,7 +193,10 @@ The submission-ready runbook is [ShadowStack.pdf](output/pdf/ShadowStack.pdf), t
 ```text
 SurgiMap-Repo/
 ├── backend/
-│   ├── app/              # FastAPI app, routers, models, services
+│   ├── app/
+│   │   ├── presentation/ # HTTP routes, dependency wiring and API app
+│   │   ├── business/     # Search, auth, stock and sync use cases
+│   │   └── data/         # ORM models, repositories and sessions
 │   ├── data/             # 10 simulated pharmacy SQLite sources
 │   ├── scripts/          # build, sync, freshness, and stock demo tools
 │   └── tests/            # API, auth, catalog, and sync tests

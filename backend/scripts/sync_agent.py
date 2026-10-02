@@ -13,7 +13,7 @@ import urllib.request
 
 from dotenv import load_dotenv
 
-from app.services.master_catalog import normalize_item_name
+from app.business.master_catalog import normalize_item_name
 from scripts.demo_config import TOTAL_PHARMACIES
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]

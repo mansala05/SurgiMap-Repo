@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 import sqlite3
 
-from app.services.master_catalog import normalize_item_name
+from app.business.master_catalog import normalize_item_name
 from scripts.demo_config import TOTAL_PHARMACIES, demo_updated_at
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]

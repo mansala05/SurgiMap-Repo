@@ -82,7 +82,7 @@ const SERVICES = [
     tag: 'MAP',
     title: 'Map View & Directions',
     desc: 'Switch to map view to see all nearby pharmacies that have your kit pinned on an interactive map. Get directions with one tap.',
-    points: ['OpenStreetMap pharmacy map', 'Distance shown on every result', 'OpenStreetMap route link'],
+    points: ['Google Maps pharmacy map', 'Distance shown on every result', 'Google Maps route link'],
   },
   {
     icon: <BookOpenIcon className="w-6 h-6" />,
