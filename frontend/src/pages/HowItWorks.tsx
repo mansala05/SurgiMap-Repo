@@ -12,6 +12,7 @@ import {
   'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
+import { PharmacyPreviewMap } from '../components/PharmacyPreviewMap';
 
 const NAV_LINKS = ['About', 'How it works', 'Help'];
 const STEPS = [
@@ -223,12 +224,7 @@ export function HowItWorks() {
           </div>
         </div>
         <div className="flex-1 w-full relative z-10">
-          <div className="aspect-[4/3] bg-silverMist/20 rounded-[3rem] border border-silverMist shadow-2xl flex flex-col items-center justify-center text-steelBlue overflow-hidden">
-            <MapPinIcon className="w-16 h-16 text-glacierBlue mb-4" />
-            <span className="text-sm font-bold uppercase tracking-widest">
-              Interactive Map Preview
-            </span>
-          </div>
+          <PharmacyPreviewMap />
         </div>
       </section>
 
