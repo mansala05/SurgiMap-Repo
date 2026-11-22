@@ -34,6 +34,40 @@ Open <http://localhost:5173>. The launcher starts the API, React app, and invent
 
 Windows users can run the three processes in separate terminals using the commands in [the software instructions](output/pdf/ShadowStack.pdf).
 
+### Windows PowerShell
+
+On the first run, set up the backend and frontend from the repository folder:
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+cd ..\frontend
+npm.cmd install
+```
+
+Then keep three PowerShell windows open while using the app:
+
+```powershell
+# Window 1: API
+cd path\to\SurgiMap-Repo\backend
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+```powershell
+# Window 2: frontend
+cd path\to\SurgiMap-Repo\frontend
+npm.cmd run dev
+```
+
+```powershell
+# Window 3: pharmacy stock sync
+cd path\to\SurgiMap-Repo\backend
+.\.venv\Scripts\python.exe -m scripts.sync_agent --watch
+```
+
+Replace `path\to\SurgiMap-Repo` with the folder where you cloned the repository. Open <http://localhost:5173> and press `Ctrl+C` in each window to stop the processes. The install commands are only needed on the first run or when dependencies change.
+
 ## Demo credentials
 
 - Pharmacy portal: <http://localhost:5173/login>
@@ -71,7 +105,7 @@ Each pharmacy database represents an independent inventory system. The agent tol
 | Layer | Technology | Purpose |
 |---|---|---|
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS | Responsive search and pharmacy-monitor interfaces |
-| Maps | Google Maps JavaScript API and Google Maps URLs | Interactive result markers with a browser API key; embedded selected-location map without one |
+| Maps | Google Maps JavaScript API, Google Maps URLs, OpenStreetMap tiles | Search result markers with a browser API key; embedded selected-location map without one; clickable demo pharmacy pins on the How It Works guide |
 | API | FastAPI, Pydantic | Typed REST endpoints, validation, auth, and OpenAPI docs |
 | Data | SQLAlchemy, PostgreSQL / SQLite | Portable central inventory store |
 | Integration | Python, SQLite, 30-second polling agent | Simulated multi-pharmacy inventory ingestion |
@@ -85,6 +119,8 @@ Each pharmacy database represents an independent inventory system. The agent tol
 - Sort matching items predictably and, when location is supplied, place nearest pharmacies first.
 - Show per-pharmacy sync state as **Live**, **Delayed**, or **Offline**, refreshing every 30 seconds.
 - Open Call, WhatsApp, Google Maps, and directions actions from results.
+- Show suggested kit names in the search results view when no in-stock pharmacies match.
+- Show the ten simulated pharmacy locations as clickable pins on the How It Works guide. This map loads locations from `/pharmacies`; selecting a pin shows its name, area, and a directions link. Guide pins show locations, not stock availability.
 - Protect inventory ingestion with an API key, revalidate data server-side, reject duplicate batch items, and roll back failed batches.
 - Protect the pharmacy monitor with signed, expiring sessions; the monitor displays real central inventory and cannot bypass the source-of-truth sync flow.
 
@@ -169,6 +205,7 @@ The central store is PostgreSQL-ready through `compose.yaml`, but the submission
 ## Known limitations and judge notes
 
 - Internet access is needed for Google Maps tiles and external route links; search, stock status, Call, and WhatsApp still work without map tiles.
+- The How It Works guide uses OpenStreetMap tiles and needs the local API for pharmacy pins. Its pharmacy locations are demo data, and the map does not show kit availability. Map tiles require internet access.
 - Browser geolocation is optional. Denial falls back to stock/name ordering and manual demo locations.
 - Inventory is prototype data. Always verify by phone before travelling.
 - The generated SQLite database files are intentionally included so the MVP works immediately; generated dependencies and build folders are excluded.
