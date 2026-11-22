@@ -23,6 +23,20 @@ export type CatalogResponse = {
   total: number;
 };
 
+export type Pharmacy = {
+  id: number;
+  name: string;
+  address: string;
+  latitude: number | null;
+  longitude: number | null;
+};
+
+export async function getPharmacies(signal?: AbortSignal): Promise<Pharmacy[]> {
+  const response = await fetch(new URL('/pharmacies', API_BASE_URL), { signal });
+  if (!response.ok) throw new Error(`Could not load pharmacies (${response.status})`);
+  return response.json() as Promise<Pharmacy[]>;
+}
+
 type ApiErrorBody = {
   detail?: string;
 };

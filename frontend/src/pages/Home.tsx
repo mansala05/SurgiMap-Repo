@@ -14,6 +14,7 @@ import {
   'lucide-react';
 import { SurgicalKitScene } from '../components/SurgicalKitScene';
 import { PharmacyResultCard } from '../components/PharmacyResultCard';
+import { NoResults } from './NoResults';
 import { searchStock, suggestKits, type StockResult } from '../lib/api';
 import { STOCK_REFRESH_INTERVAL_MS } from '../lib/stock';
 import {
@@ -327,24 +328,7 @@ export function Home() {
         }
 
         {!isSearching && !searchError && results.length === 0 &&
-          <div className="w-full max-w-4xl mb-8 rounded-2xl border border-silverMist bg-white p-10 text-center">
-            <p className="text-xl font-black text-arcticNavy">No in-stock pharmacies found</p>
-            <p className="mt-2 text-steelBlue">
-              {suggestions.length > 0 ? 'Did you mean one of these kits?' : 'Try another kit name or a common abbreviation.'}
-            </p>
-            {suggestions.length > 0 &&
-              <div className="mt-5 flex flex-wrap justify-center gap-2">
-                {suggestions.map((suggestion) =>
-                  <button
-                    key={suggestion}
-                    onClick={() => navigate(`/?q=${encodeURIComponent(suggestion)}`)}
-                    className="rounded-full border border-arcticNavy/30 bg-arcticNavy/5 px-4 py-2 text-sm font-bold text-arcticNavy hover:bg-arcticNavy hover:text-white transition-colors">
-                    {suggestion}
-                  </button>
-                )}
-              </div>
-            }
-          </div>
+          <NoResults suggestions={suggestions} onSuggestion={(name) => navigate(`/?q=${encodeURIComponent(name)}`)} />
         }
 
         {/* Pharmacy Cards */}

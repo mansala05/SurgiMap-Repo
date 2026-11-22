@@ -5,7 +5,6 @@ import { Home } from './pages/Home';
 import { HowItWorks } from './pages/HowItWorks';
 import { Search } from './pages/Search';
 import { Help } from './pages/Help';
-import { NoResults } from './pages/NoResults';
 import { About } from './pages/About';
 import { Login } from './pages/auth/Login';
 import { PharmacyDashboard } from './pages/pharmacy/PharmacyDashboard';
@@ -23,7 +22,7 @@ export function App() {
         <Route path="/how-it-works" element={<HowItWorks />} />
         <Route path="/search" element={<Search />} />
         <Route path="/help" element={<Help />} />
-        <Route path="/no-results" element={<NoResults />} />
+        <Route path="/no-results" element={<Navigate to="/search" replace />} />
         <Route path="/about" element={<About />} />
         <Route path="/map-view" element={
           <Suspense fallback={<div className="min-h-screen bg-iceWhite flex items-center justify-center font-bold text-arcticNavy">Loading map…</div>}>
